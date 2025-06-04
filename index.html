@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Gantt Chart</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="gantt-container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <button class="btn btn--primary" id="addTaskBtn">
+                    <span>+ Add Task</span>
+                </button>
+                <button class="btn btn--secondary" id="expandAllBtn">Expand All</button>
+                <button class="btn btn--secondary" id="collapseAllBtn">Collapse All</button>
+            </div>
+            <div class="toolbar-center">
+                <h1>Project Gantt Chart</h1>
+            </div>
+            <div class="toolbar-right">
+                <div class="zoom-controls">
+                    <span class="zoom-label">Zoom:</span>
+                    <button class="btn btn--sm zoom-btn active" data-zoom="day">Day</button>
+                    <button class="btn btn--sm zoom-btn" data-zoom="week">Week</button>
+                    <button class="btn btn--sm zoom-btn" data-zoom="month">Month</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="gantt-main">
+            <!-- Task List Panel -->
+            <div class="task-list-panel">
+                <div class="task-list-header">
+                    <div class="task-col-name">Task Name</div>
+                    <div class="task-col-start">Start Date</div>
+                    <div class="task-col-end">End Date</div>
+                    <div class="task-col-duration">Duration</div>
+                    <div class="task-col-progress">Progress</div>
+                    <div class="task-col-resources">Resources</div>
+                </div>
+                <div class="task-list-body" id="taskListBody">
+                    <!-- Tasks will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Timeline Panel -->
+            <div class="timeline-panel">
+                <div class="timeline-header" id="timelineHeader">
+                    <!-- Timeline headers will be rendered here -->
+                </div>
+                <div class="timeline-body" id="timelineBody">
+                    <div class="timeline-grid" id="timelineGrid"></div>
+                    <div class="timeline-bars" id="timelineBars">
+                        <!-- Task bars will be rendered here -->
+                    </div>
+                    <div class="timeline-dependencies" id="timelineDependencies">
+                        <!-- Dependency lines will be rendered here -->
+                    </div>
+                    <div class="today-line" id="todayLine"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Edit Modal -->
+    <div class="modal-overlay" id="taskModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add New Task</h3>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label class="form-label" for="taskName">Task Name</label>
+                        <input type="text" class="form-control" id="taskName" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="taskStartDate">Start Date</label>
+                            <input type="date" class="form-control" id="taskStartDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="taskEndDate">End Date</label>
+                            <input type="date" class="form-control" id="taskEndDate" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="taskProgress">Progress (%)</label>
+                            <input type="number" class="form-control" id="taskProgress" min="0" max="100" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="taskType">Task Type</label>
+                            <select class="form-control" id="taskType">
+                                <option value="task">Task</option>
+                                <option value="milestone">Milestone</option>
+                                <option value="summary">Summary</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="taskResources">Resources (comma-separated)</label>
+                        <input type="text" class="form-control" id="taskResources" placeholder="John Doe, Jane Smith">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="taskDependencies">Dependencies</label>
+                        <select class="form-control" id="taskDependencies" multiple>
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="taskColor">Task Color</label>
+                        <input type="color" class="form-control" id="taskColor" value="#2196F3">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--secondary" id="modalCancel">Cancel</button>
+                <button type="submit" class="btn btn--primary" id="modalSave" form="taskForm">Save Task</button>
+                <button type="button" class="btn btn--outline" id="modalDelete" style="display: none;">Delete Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" data-action="edit">Edit Task</div>
+        <div class="context-menu-item" data-action="delete">Delete Task</div>
+        <div class="context-menu-item" data-action="add-child">Add Child Task</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" data-action="mark-complete">Mark Complete</div>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip">
+        <div class="tooltip-content"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
