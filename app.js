@@ -318,6 +318,9 @@ class GanttChart {
         timelineBody.addEventListener('scroll', () => {
             timelineHeader.scrollLeft = timelineBody.scrollLeft;
         });
+        
+        // Initialize resize functionality
+        this.initializeResize();
     }
     
     render() {
@@ -371,22 +374,49 @@ class GanttChart {
         const hasChildren = this.tasks.some(t => t.parent === task.id);
         const isCollapsed = this.collapsedTasks.has(task.id);
         
-        row.innerHTML = `
-            <div class="task-name">
-                ${hasChildren ? `<button class="task-expand-toggle">${isCollapsed ? '▶' : '▼'}</button>` : '<span class="task-indent"></span>'}
-                <div class="task-type-indicator ${task.type}" style="background-color: ${task.color}"></div>
-                <span class="task-name-text">${task.name}</span>
-            </div>
-            <div class="task-start-date">${this.formatDate(task.startDate)}</div>
-            <div class="task-end-date">${this.formatDate(task.endDate)}</div>
-            <div class="task-duration">${task.duration}d</div>
-            <div class="task-progress">
-                <div class="task-progress-bar">
-                    <div class="task-progress-fill" style="width: ${task.progress}%"></div>
-                </div>
-            </div>
-            <div class="task-resources">${task.resources.join(', ')}</div>
+        // Create task name with proper indentation
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'task-name';
+        nameDiv.innerHTML = `
+            ${hasChildren ? `<button class="task-expand-toggle">${isCollapsed ? '▶' : '▼'}</button>` : '<span class="task-indent"></span>'}
+            <div class="task-type-indicator ${task.type}" style="background-color: ${task.color}"></div>
+            <span class="task-name-text">${task.name}</span>
         `;
+        row.appendChild(nameDiv);
+        
+        // Start date
+        const startDate = document.createElement('div');
+        startDate.className = 'task-start-date';
+        startDate.textContent = this.formatDate(task.startDate);
+        row.appendChild(startDate);
+        
+        // End date
+        const endDate = document.createElement('div');
+        endDate.className = 'task-end-date';
+        endDate.textContent = this.formatDate(task.endDate);
+        row.appendChild(endDate);
+        
+        // Duration
+        const duration = document.createElement('div');
+        duration.className = 'task-duration';
+        duration.textContent = `${task.duration}d`;
+        row.appendChild(duration);
+        
+        // Progress
+        const progress = document.createElement('div');
+        progress.className = 'task-progress';
+        progress.innerHTML = `
+            <div class="task-progress-bar">
+                <div class="task-progress-fill" style="width: ${task.progress}%"></div>
+            </div>
+        `;
+        row.appendChild(progress);
+        
+        // Resources
+        const resources = document.createElement('div');
+        resources.className = 'task-resources';
+        resources.textContent = task.resources.join(', ');
+        row.appendChild(resources);
         
         // Event listeners
         row.addEventListener('click', (e) => {
@@ -535,7 +565,7 @@ class GanttChart {
         const width = task.type === 'milestone' ? 16 : duration * this.dayWidth;
         
         bar.style.left = `${startOffset}px`;
-        bar.style.top = `${rowIndex * this.rowHeight + 8}px`;
+        bar.style.top = `${rowIndex * this.rowHeight + 4}px`;
         bar.style.width = `${width}px`;
         
         if (this.selectedTask === task.id) {
@@ -1186,6 +1216,52 @@ class GanttChart {
             this.initializeData();
             this.render();
             this.showNotification('All data cleared', 'info');
+        }
+    }
+    
+    initializeResize() {
+        const resizeHandle = document.getElementById('resizeHandle');
+        const taskListPanel = document.getElementById('taskListPanel');
+        const ganttMain = document.querySelector('.gantt-main');
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+        
+        resizeHandle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = taskListPanel.offsetWidth;
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            
+            const deltaX = e.clientX - startX;
+            const newWidth = Math.max(300, Math.min(startWidth + deltaX, ganttMain.offsetWidth * 0.6));
+            taskListPanel.style.width = `${newWidth}px`;
+            
+            // Trigger a resize event to update timeline if needed
+            window.dispatchEvent(new Event('resize'));
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                
+                // Save the new width to localStorage
+                localStorage.setItem('taskListPanelWidth', taskListPanel.offsetWidth);
+            }
+        });
+        
+        // Restore saved width if available
+        const savedWidth = localStorage.getItem('taskListPanelWidth');
+        if (savedWidth) {
+            taskListPanel.style.width = `${savedWidth}px`;
         }
     }
 }
