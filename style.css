@@ -849,8 +849,10 @@ select.form-control {
 }
 
 .task-row.selected {
-  background-color: var(--color-primary);
-  color: var(--color-btn-primary-text);
+  background-color: rgba(var(--color-success-rgb), 0.2);
+  color: var(--color-text);
+  border-left: 3px solid var(--color-primary);
+  position: relative;
 }
 
 .task-row.summary {
@@ -1047,6 +1049,7 @@ select.form-control {
 
 .timeline-bar.selected {
   box-shadow: 0 0 0 2px var(--color-primary);
+  z-index: 10;
 }
 
 .timeline-bar.dragging {
