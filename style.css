@@ -951,6 +951,28 @@ select.form-control {
   align-items: center;
 }
 
+.timeline-month-row {
+  height: 32px;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.timeline-header-month {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4) var(--space-8);
+  border-right: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  background-color: var(--color-surface);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--color-primary);
+}
+
 .timeline-header-cell {
   display: flex;
   align-items: center;

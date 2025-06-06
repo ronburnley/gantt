@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Gantt Chart</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#21808d">
 </head>
 <body>
     <div class="gantt-container">
@@ -16,6 +18,9 @@
                 </button>
                 <button class="btn btn--secondary" id="expandAllBtn">Expand All</button>
                 <button class="btn btn--secondary" id="collapseAllBtn">Collapse All</button>
+                <button class="btn btn--secondary" id="exportBtn">Export</button>
+                <button class="btn btn--secondary" id="importBtn">Import</button>
+                <input type="file" id="importFile" style="display: none;" accept=".json">
             </div>
             <div class="toolbar-center">
                 <h1>Project Gantt Chart</h1>

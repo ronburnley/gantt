@@ -8,8 +8,8 @@ class GanttChart {
         this.dragState = null;
         this.collapsedTasks = new Set();
         
-        this.timelineStart = new Date('2024-01-01');
-        this.timelineEnd = new Date('2024-06-01');
+        this.timelineStart = new Date('2025-06-01');
+        this.timelineEnd = new Date('2025-12-31');
         this.today = new Date();
         
         this.dayWidth = 40;
@@ -38,8 +38,8 @@ class GanttChart {
                 {
                     "id": "1",
                     "name": "Project Planning Phase",
-                    "startDate": "2024-01-01",
-                    "endDate": "2024-01-15",
+                    "startDate": "2025-06-01",
+                    "endDate": "2025-06-15",
                     "duration": 15,
                     "progress": 100,
                     "type": "summary",
@@ -51,8 +51,8 @@ class GanttChart {
                 {
                     "id": "2",
                     "name": "Requirements Gathering",
-                    "startDate": "2024-01-01",
-                    "endDate": "2024-01-08",
+                    "startDate": "2025-06-01",
+                    "endDate": "2025-06-08",
                     "duration": 8,
                     "progress": 100,
                     "type": "task",
@@ -64,8 +64,8 @@ class GanttChart {
                 {
                     "id": "3",
                     "name": "Project Charter Approval",
-                    "startDate": "2024-01-10",
-                    "endDate": "2024-01-10",
+                    "startDate": "2025-06-10",
+                    "endDate": "2025-06-10",
                     "duration": 0,
                     "progress": 100,
                     "type": "milestone",
@@ -77,8 +77,8 @@ class GanttChart {
                 {
                     "id": "4",
                     "name": "Team Formation",
-                    "startDate": "2024-01-08",
-                    "endDate": "2024-01-15",
+                    "startDate": "2025-06-08",
+                    "endDate": "2025-06-15",
                     "duration": 8,
                     "progress": 100,
                     "type": "task",
@@ -90,8 +90,8 @@ class GanttChart {
                 {
                     "id": "5",
                     "name": "Design Phase",
-                    "startDate": "2024-01-16",
-                    "endDate": "2024-02-15",
+                    "startDate": "2025-06-16",
+                    "endDate": "2025-07-15",
                     "duration": 30,
                     "progress": 75,
                     "type": "summary",
@@ -103,8 +103,8 @@ class GanttChart {
                 {
                     "id": "6",
                     "name": "User Research",
-                    "startDate": "2024-01-16",
-                    "endDate": "2024-01-25",
+                    "startDate": "2025-06-16",
+                    "endDate": "2025-06-25",
                     "duration": 10,
                     "progress": 100,
                     "type": "task",
@@ -116,8 +116,8 @@ class GanttChart {
                 {
                     "id": "7",
                     "name": "Wireframing",
-                    "startDate": "2024-01-26",
-                    "endDate": "2024-02-05",
+                    "startDate": "2025-06-26",
+                    "endDate": "2025-07-05",
                     "duration": 11,
                     "progress": 80,
                     "type": "task",
@@ -129,8 +129,8 @@ class GanttChart {
                 {
                     "id": "8",
                     "name": "UI Design",
-                    "startDate": "2024-02-06",
-                    "endDate": "2024-02-15",
+                    "startDate": "2025-07-06",
+                    "endDate": "2025-07-15",
                     "duration": 10,
                     "progress": 60,
                     "type": "task",
@@ -142,8 +142,8 @@ class GanttChart {
                 {
                     "id": "9",
                     "name": "Design Review",
-                    "startDate": "2024-02-16",
-                    "endDate": "2024-02-16",
+                    "startDate": "2025-07-16",
+                    "endDate": "2025-07-16",
                     "duration": 0,
                     "progress": 0,
                     "type": "milestone",
@@ -155,8 +155,8 @@ class GanttChart {
                 {
                     "id": "10",
                     "name": "Development Phase",
-                    "startDate": "2024-02-17",
-                    "endDate": "2024-04-15",
+                    "startDate": "2025-07-17",
+                    "endDate": "2025-09-15",
                     "duration": 58,
                     "progress": 30,
                     "type": "summary",
@@ -168,8 +168,8 @@ class GanttChart {
                 {
                     "id": "11",
                     "name": "Frontend Development",
-                    "startDate": "2024-02-17",
-                    "endDate": "2024-03-20",
+                    "startDate": "2025-07-17",
+                    "endDate": "2025-08-20",
                     "duration": 32,
                     "progress": 45,
                     "type": "task",
@@ -181,8 +181,8 @@ class GanttChart {
                 {
                     "id": "12",
                     "name": "Backend Development",
-                    "startDate": "2024-02-17",
-                    "endDate": "2024-03-25",
+                    "startDate": "2025-07-17",
+                    "endDate": "2025-08-25",
                     "duration": 37,
                     "progress": 35,
                     "type": "task",
@@ -194,8 +194,8 @@ class GanttChart {
                 {
                     "id": "13",
                     "name": "Integration Testing",
-                    "startDate": "2024-03-26",
-                    "endDate": "2024-04-10",
+                    "startDate": "2025-08-26",
+                    "endDate": "2025-09-10",
                     "duration": 16,
                     "progress": 10,
                     "type": "task",
@@ -207,8 +207,8 @@ class GanttChart {
                 {
                     "id": "14",
                     "name": "Beta Release",
-                    "startDate": "2024-04-15",
-                    "endDate": "2024-04-15",
+                    "startDate": "2025-09-15",
+                    "endDate": "2025-09-15",
                     "duration": 0,
                     "progress": 0,
                     "type": "milestone",
@@ -220,8 +220,8 @@ class GanttChart {
                 {
                     "id": "15",
                     "name": "Testing & Launch",
-                    "startDate": "2024-04-16",
-                    "endDate": "2024-05-15",
+                    "startDate": "2025-09-16",
+                    "endDate": "2025-10-15",
                     "duration": 30,
                     "progress": 0,
                     "type": "summary",
@@ -233,8 +233,8 @@ class GanttChart {
                 {
                     "id": "16",
                     "name": "User Acceptance Testing",
-                    "startDate": "2024-04-16",
-                    "endDate": "2024-04-30",
+                    "startDate": "2025-09-16",
+                    "endDate": "2025-09-30",
                     "duration": 15,
                     "progress": 0,
                     "type": "task",
@@ -246,8 +246,8 @@ class GanttChart {
                 {
                     "id": "17",
                     "name": "Production Deployment",
-                    "startDate": "2024-05-01",
-                    "endDate": "2024-05-10",
+                    "startDate": "2025-10-01",
+                    "endDate": "2025-10-10",
                     "duration": 10,
                     "progress": 0,
                     "type": "task",
@@ -259,8 +259,8 @@ class GanttChart {
                 {
                     "id": "18",
                     "name": "Project Launch",
-                    "startDate": "2024-05-15",
-                    "endDate": "2024-05-15",
+                    "startDate": "2025-10-15",
+                    "endDate": "2025-10-15",
                     "duration": 0,
                     "progress": 0,
                     "type": "milestone",
@@ -284,6 +284,9 @@ class GanttChart {
         document.getElementById('addTaskBtn').addEventListener('click', () => this.showTaskModal());
         document.getElementById('expandAllBtn').addEventListener('click', () => this.expandAll());
         document.getElementById('collapseAllBtn').addEventListener('click', () => this.collapseAll());
+        document.getElementById('exportBtn').addEventListener('click', () => this.exportData());
+        document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+        document.getElementById('importFile').addEventListener('change', (e) => this.importData(e));
         
         // Zoom controls
         document.querySelectorAll('.zoom-btn').forEach(btn => {
@@ -450,6 +453,27 @@ class GanttChart {
         const header = document.getElementById('timelineHeader');
         header.innerHTML = '';
         
+        // Add month row for day and week views
+        if (this.currentZoom === 'day' || this.currentZoom === 'week') {
+            const monthRow = document.createElement('div');
+            monthRow.className = 'timeline-header-row timeline-month-row';
+            
+            const monthsData = this.getMonthsInRange();
+            monthsData.forEach(monthData => {
+                const monthCell = document.createElement('div');
+                monthCell.className = 'timeline-header-month';
+                monthCell.style.width = `${monthData.width}px`;
+                monthCell.textContent = monthData.label;
+                monthRow.appendChild(monthCell);
+            });
+            
+            header.appendChild(monthRow);
+            header.style.minHeight = '80px'; // Adjust height for two rows
+        } else {
+            header.style.minHeight = '48px'; // Single row height
+        }
+        
+        // Regular header row (days/weeks/months)
         const headerRow = document.createElement('div');
         headerRow.className = 'timeline-header-row';
         
@@ -474,6 +498,35 @@ class GanttChart {
         }
         
         header.appendChild(headerRow);
+    }
+    
+    getMonthsInRange() {
+        const months = [];
+        const current = new Date(this.timelineStart);
+        current.setDate(1); // Start from the first day of the month
+        
+        while (current <= this.timelineEnd) {
+            const monthStart = new Date(current);
+            const monthEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+            
+            // Calculate the visible start and end for this month
+            const visibleStart = monthStart < this.timelineStart ? this.timelineStart : monthStart;
+            const visibleEnd = monthEnd > this.timelineEnd ? this.timelineEnd : monthEnd;
+            
+            // Calculate the width based on visible days
+            const visibleDays = Math.ceil((visibleEnd - visibleStart) / (1000 * 60 * 60 * 24)) + 1;
+            const width = visibleDays * this.dayWidth;
+            
+            months.push({
+                label: current.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                width: width
+            });
+            
+            // Move to next month
+            current.setMonth(current.getMonth() + 1);
+        }
+        
+        return months;
     }
     
     shouldShowDate(date, index) {
@@ -1076,6 +1129,81 @@ class GanttChart {
     
     formatDateForInput(date) {
         return date.toISOString().split('T')[0];
+    }
+    
+    exportData() {
+        try {
+            const dataToExport = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                projectName: 'Gantt Chart Export',
+                tasks: this.tasks.map(task => ({
+                    ...task,
+                    startDate: task.startDate.toISOString(),
+                    endDate: task.endDate.toISOString()
+                })),
+                collapsedTasks: Array.from(this.collapsedTasks),
+                currentZoom: this.currentZoom
+            };
+            
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gantt-export-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            this.showNotification('Data exported successfully', 'success');
+        } catch (error) {
+            console.error('Export failed:', error);
+            this.showNotification('Failed to export data', 'error');
+        }
+    }
+    
+    importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                
+                // Validate data structure
+                if (!data.tasks || !Array.isArray(data.tasks)) {
+                    throw new Error('Invalid data format');
+                }
+                
+                // Import tasks
+                this.tasks = data.tasks.map(task => ({
+                    ...task,
+                    startDate: new Date(task.startDate),
+                    endDate: new Date(task.endDate)
+                }));
+                
+                // Import other settings
+                this.collapsedTasks = new Set(data.collapsedTasks || []);
+                if (data.currentZoom) {
+                    this.currentZoom = data.currentZoom;
+                }
+                
+                // Update timeline bounds and render
+                this.updateTimelineBounds();
+                this.render();
+                this.autoSave();
+                
+                this.showNotification('Data imported successfully', 'success');
+            } catch (error) {
+                console.error('Import failed:', error);
+                this.showNotification('Failed to import data. Please check the file format.', 'error');
+            }
+        };
+        
+        reader.readAsText(file);
+        event.target.value = ''; // Reset file input
     }
     
     getWeekNumber(date) {
