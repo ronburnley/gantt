@@ -1,4 +1,4 @@
-// Gantt Chart Application with Data Persistence
+// Gantt Chart Application with Firestore Persistence
 class GanttChart {
     constructor() {
         this.tasks = [];
@@ -18,17 +18,62 @@ class GanttChart {
         // Auto-save timeout
         this.saveTimeout = null;
         
-        // Load saved data or initialize with sample data
-        if (!this.loadFromLocalStorage()) {
-            this.initializeData();
+        // Firestore collection reference
+        this.projectId = 'default-project'; // Can be made configurable later
+        this.firestoreEnabled = false;
+        
+        // Initialize Firebase after DOM is ready
+        this.initializeFirestore().then(() => {
+            // Load saved data or initialize with sample data
+            this.loadData().then(() => {
+                this.initializeEventListeners();
+                this.render();
+                
+                // Show notification that data was loaded
+                if (this.tasks.length > 0) {
+                    this.showNotification('Project data loaded successfully', 'success');
+                }
+            });
+        });
+    }
+    
+    async initializeFirestore() {
+        try {
+            // Check if Firebase is available
+            if (typeof window.db !== 'undefined') {
+                this.db = window.db;
+                this.firestoreEnabled = true;
+                console.log('Firestore initialized successfully');
+            } else {
+                console.warn('Firestore not available, falling back to localStorage');
+                this.firestoreEnabled = false;
+            }
+        } catch (error) {
+            console.error('Failed to initialize Firestore:', error);
+            this.firestoreEnabled = false;
         }
-        
-        this.initializeEventListeners();
-        this.render();
-        
-        // Show notification that data was loaded
-        if (this.tasks.length > 0) {
-            this.showNotification('Project data loaded successfully', 'success');
+    }
+    
+    async loadData() {
+        try {
+            let loaded = false;
+            
+            if (this.firestoreEnabled) {
+                loaded = await this.loadFromFirestore();
+            }
+            
+            // Fallback to localStorage if Firestore fails or is unavailable
+            if (!loaded) {
+                loaded = this.loadFromLocalStorage();
+            }
+            
+            // If no data found anywhere, initialize with sample data
+            if (!loaded) {
+                this.initializeData();
+            }
+        } catch (error) {
+            console.error('Failed to load data:', error);
+            this.initializeData();
         }
     }
     
@@ -1214,7 +1259,86 @@ class GanttChart {
         return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
     }
     
-    // Data persistence methods
+    // Firestore persistence methods
+    async saveToFirestore() {
+        try {
+            if (!this.firestoreEnabled || !this.db) {
+                return false;
+            }
+            
+            const dataToSave = {
+                version: '1.0',
+                lastSaved: new Date().toISOString(),
+                tasks: this.tasks.map(task => ({
+                    ...task,
+                    startDate: task.startDate.toISOString(),
+                    endDate: task.endDate.toISOString()
+                })),
+                collapsedTasks: Array.from(this.collapsedTasks),
+                currentZoom: this.currentZoom,
+                selectedTask: this.selectedTask,
+                timelineStart: this.timelineStart.toISOString(),
+                timelineEnd: this.timelineEnd.toISOString()
+            };
+            
+            await this.db.collection('gantt-projects').doc(this.projectId).set(dataToSave);
+            return true;
+        } catch (error) {
+            console.error('Failed to save to Firestore:', error);
+            return false;
+        }
+    }
+    
+    async loadFromFirestore() {
+        try {
+            if (!this.firestoreEnabled || !this.db) {
+                return false;
+            }
+            
+            const doc = await this.db.collection('gantt-projects').doc(this.projectId).get();
+            
+            if (!doc.exists) {
+                console.log('No Firestore document found');
+                return false;
+            }
+            
+            const data = doc.data();
+            
+            // Restore tasks with proper date objects
+            this.tasks = data.tasks.map(task => ({
+                ...task,
+                startDate: new Date(task.startDate),
+                endDate: new Date(task.endDate)
+            }));
+            
+            // Restore other settings
+            this.collapsedTasks = new Set(data.collapsedTasks || []);
+            
+            if (data.currentZoom) {
+                this.currentZoom = data.currentZoom;
+            }
+            
+            if (data.selectedTask) {
+                this.selectedTask = data.selectedTask;
+            }
+            
+            // Restore timeline bounds if available
+            if (data.timelineStart && data.timelineEnd) {
+                this.timelineStart = new Date(data.timelineStart);
+                this.timelineEnd = new Date(data.timelineEnd);
+            } else {
+                this.updateTimelineBounds();
+            }
+            
+            console.log('Data loaded from Firestore');
+            return true;
+        } catch (error) {
+            console.error('Failed to load from Firestore:', error);
+            return false;
+        }
+    }
+    
+    // Local storage persistence methods (fallback)
     saveToLocalStorage() {
         try {
             const dataToSave = {
@@ -1283,9 +1407,23 @@ class GanttChart {
         }
         
         // Set a new timeout to save after 500ms of inactivity
-        this.saveTimeout = setTimeout(() => {
-            if (this.saveToLocalStorage()) {
-                this.showNotification('Changes saved', 'success', 1000);
+        this.saveTimeout = setTimeout(async () => {
+            try {
+                let saved = false;
+                
+                if (this.firestoreEnabled) {
+                    saved = await this.saveToFirestore();
+                }
+                
+                // Also save to localStorage as backup
+                this.saveToLocalStorage();
+                
+                if (saved || !this.firestoreEnabled) {
+                    this.showNotification('Changes saved', 'success', 1000);
+                }
+            } catch (error) {
+                console.error('Auto-save failed:', error);
+                this.showNotification('Auto-save failed', 'error', 2000);
             }
         }, 500);
     }
@@ -1335,15 +1473,28 @@ class GanttChart {
         }, duration);
     }
     
-    clearAllData() {
+    async clearAllData() {
         if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
-            localStorage.removeItem('ganttChartData');
-            this.tasks = [];
-            this.collapsedTasks.clear();
-            this.selectedTask = null;
-            this.initializeData();
-            this.render();
-            this.showNotification('All data cleared', 'info');
+            try {
+                // Clear Firestore data
+                if (this.firestoreEnabled && this.db) {
+                    await this.db.collection('gantt-projects').doc(this.projectId).delete();
+                }
+                
+                // Clear localStorage data
+                localStorage.removeItem('ganttChartData');
+                
+                // Reset application state
+                this.tasks = [];
+                this.collapsedTasks.clear();
+                this.selectedTask = null;
+                this.initializeData();
+                this.render();
+                this.showNotification('All data cleared', 'info');
+            } catch (error) {
+                console.error('Failed to clear data:', error);
+                this.showNotification('Failed to clear all data', 'error');
+            }
         }
     }
     
