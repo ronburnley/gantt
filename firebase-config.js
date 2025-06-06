@@ -3,13 +3,13 @@
 // You can find these in your Firebase Console under Project Settings > General > Your apps > SDK setup and configuration
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAEAEafI_c-CgVGQM8p3kaqX8uZfj0mSzs",
-  authDomain: "gantt-ff731.firebaseapp.com",
-  projectId: "gantt-ff731",
-  storageBucket: "gantt-ff731.firebasestorage.app",
-  messagingSenderId: "609152736901",
-  appId: "1:609152736901:web:13e3e4a68cf486925253ec",
-  measurementId: "G-REHJBJDT3W"
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+  measurementId: process.env.FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
