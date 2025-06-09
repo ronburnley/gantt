@@ -727,6 +727,7 @@ select.form-control {
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow: hidden;
 }
 
 /* Resize Handle */
@@ -739,7 +740,7 @@ select.form-control {
   background-color: var(--color-border);
   cursor: col-resize;
   transition: background-color var(--duration-fast) var(--ease-standard);
-  z-index: 10;
+  z-index: 20;
 }
 
 .resize-handle:hover {
@@ -753,6 +754,7 @@ select.form-control {
 .task-list-header {
   display: flex;
   padding: var(--space-12) var(--space-16);
+  padding-right: var(--space-24); /* Add extra padding to avoid resize handle */
   background-color: var(--color-secondary);
   border-bottom: 1px solid var(--color-border);
   font-weight: var(--font-weight-medium);
@@ -760,6 +762,7 @@ select.form-control {
   color: var(--color-text-secondary);
   min-height: 48px;
   align-items: center;
+  overflow: hidden;
 }
 
 .task-list-header > div {
@@ -1437,4 +1440,42 @@ select[multiple] {
 .notification-warning {
   background-color: var(--color-warning);
   color: white;
+}
+
+/* Initiative Controls */
+.initiative-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.initiative-selector {
+  min-width: 200px;
+  height: 36px;
+  padding: 0 var(--space-12);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  cursor: pointer;
+  appearance: none;
+  background-image: var(--select-caret-light);
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 32px;
+}
+
+.initiative-selector:hover {
+  background-color: var(--color-secondary);
+}
+
+.initiative-selector:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+#newInitiativeBtn {
+  white-space: nowrap;
 }

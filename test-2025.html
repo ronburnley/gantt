@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 Date Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; }
+        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>Gantt Chart 2025 Date Visibility Test</h1>
+    
+    <div id="test-results"></div>
+    
+    <button onclick="clearLocalStorage()">Clear All Local Data</button>
+    <button onclick="runTests()">Run Tests</button>
+    
+    <script>
+        function addResult(message, type = 'success') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            document.getElementById('test-results').appendChild(div);
+        }
+        
+        function clearLocalStorage() {
+            localStorage.removeItem('ganttChartData');
+            addResult('Cleared localStorage data', 'warning');
+        }
+        
+        function runTests() {
+            document.getElementById('test-results').innerHTML = '';
+            
+            // Test 1: Current date
+            const today = new Date();
+            addResult(`Current system date: ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
+            
+            if (today.getFullYear() === 2025) {
+                addResult('✓ System date is in 2025', 'success');
+            } else {
+                addResult(`⚠ System date is in ${today.getFullYear()}, not 2025`, 'warning');
+            }
+            
+            // Test 2: Timeline calculation
+            const timelineStart = new Date(today);
+            timelineStart.setMonth(timelineStart.getMonth() - 3);
+            timelineStart.setDate(1);
+            
+            const timelineEnd = new Date(today);
+            timelineEnd.setMonth(timelineEnd.getMonth() + 9);
+            timelineEnd.setDate(new Date(timelineEnd.getFullYear(), timelineEnd.getMonth() + 1, 0).getDate());
+            
+            addResult(`Timeline start: ${timelineStart.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
+            addResult(`Timeline end: ${timelineEnd.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
+            
+            if (timelineStart.getFullYear() === 2025 && timelineEnd.getFullYear() >= 2025) {
+                addResult('✓ Timeline includes 2025 dates', 'success');
+            } else {
+                addResult('✗ Timeline may not include 2025 dates properly', 'error');
+            }
+            
+            // Test 3: Sample data generation
+            const projectStart = new Date(today);
+            projectStart.setDate(today.getDate() - 7);
+            
+            addResult(`Sample project start: ${projectStart.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
+            
+            if (projectStart.getFullYear() === 2025) {
+                addResult('✓ Sample data will be in 2025', 'success');
+            } else {
+                addResult('✗ Sample data will not be in 2025', 'error');
+            }
+            
+            // Test 4: Check localStorage
+            const savedData = localStorage.getItem('ganttChartData');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    if (data.tasks && data.tasks.length > 0) {
+                        const firstTaskDate = new Date(data.tasks[0].startDate);
+                        addResult(`Saved data first task: ${firstTaskDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
+                        
+                        if (firstTaskDate.getFullYear() >= 2025) {
+                            addResult('✓ Saved data contains 2025 dates', 'success');
+                        } else {
+                            addResult('⚠ Saved data contains old dates - will be cleared', 'warning');
+                        }
+                    }
+                } catch (e) {
+                    addResult('✗ Error parsing saved data', 'error');
+                }
+            } else {
+                addResult('No saved data found - will use fresh 2025 sample data', 'success');
+            }
+            
+            // Test 5: Date offset calculation
+            const todayOffset = Math.ceil((today - timelineStart) / (1000 * 60 * 60 * 24)) * 40;
+            addResult(`Today's position in timeline: ${todayOffset}px from start`);
+            
+            if (todayOffset > 0) {
+                addResult('✓ Today should be visible in timeline', 'success');
+            } else {
+                addResult('✗ Today may not be positioned correctly', 'error');
+            }
+        }
+        
+        // Run tests on load
+        runTests();
+    </script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 // Gantt Chart Application with Firestore Persistence
 class GanttChart {
     constructor() {
+        this.initiatives = [];
+        this.currentInitiativeId = null;
         this.tasks = [];
         this.currentZoom = 'day';
         this.selectedTask = null;
@@ -8,9 +10,22 @@ class GanttChart {
         this.dragState = null;
         this.collapsedTasks = new Set();
         
-        this.timelineStart = new Date('2025-06-01');
-        this.timelineEnd = new Date('2025-12-31');
         this.today = new Date();
+        console.log('Today is:', this.today.toISOString());
+        console.log('Today formatted:', this.today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+        
+        // Set timeline to start 3 months before today and end 9 months after
+        this.timelineStart = new Date(this.today);
+        this.timelineStart.setMonth(this.timelineStart.getMonth() - 3);
+        this.timelineStart.setDate(1); // Start at beginning of month
+        
+        this.timelineEnd = new Date(this.today);
+        this.timelineEnd.setMonth(this.timelineEnd.getMonth() + 9);
+        this.timelineEnd.setDate(new Date(this.timelineEnd.getFullYear(), this.timelineEnd.getMonth() + 1, 0).getDate()); // End at end of month
+        
+        console.log('Timeline start:', this.timelineStart.toISOString());
+        console.log('Timeline end:', this.timelineEnd.toISOString());
+        console.log('Timeline range:', this.timelineStart.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), 'to', this.timelineEnd.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
         
         this.dayWidth = 40;
         this.rowHeight = 40;
@@ -33,6 +48,9 @@ class GanttChart {
                 if (this.tasks.length > 0) {
                     this.showNotification('Project data loaded successfully', 'success');
                 }
+                
+                // Scroll timeline to show current date
+                this.scrollToToday();
             });
         });
     }
@@ -67,6 +85,17 @@ class GanttChart {
                 loaded = this.loadFromLocalStorage();
             }
             
+            // Clear old data if it's from before 2025 (temporary fix)
+            if (loaded && this.tasks.length > 0) {
+                const firstTaskYear = this.tasks[0].startDate.getFullYear();
+                console.log('Loaded data has first task from year:', firstTaskYear);
+                if (firstTaskYear < 2025) {
+                    console.log('Clearing old data from', firstTaskYear);
+                    localStorage.removeItem('ganttChartData');
+                    loaded = false;
+                }
+            }
+            
             // If no data found anywhere, initialize with sample data
             if (!loaded) {
                 this.initializeData();
@@ -77,251 +106,104 @@ class GanttChart {
         }
     }
     
+    getDateString(baseDate, daysToAdd) {
+        const date = new Date(baseDate);
+        date.setDate(date.getDate() + daysToAdd);
+        return date.toISOString().split('T')[0];
+    }
+    
     initializeData() {
-        const sampleData = {
-            "tasks": [
-                {
-                    "id": "1",
-                    "name": "Project Planning Phase",
-                    "startDate": "2025-06-01",
-                    "endDate": "2025-06-15",
-                    "duration": 15,
-                    "progress": 100,
-                    "type": "summary",
-                    "parent": null,
-                    "dependencies": [],
-                    "resources": ["Project Manager"],
-                    "color": "#4CAF50"
-                },
-                {
-                    "id": "2",
-                    "name": "Requirements Gathering",
-                    "startDate": "2025-06-01",
-                    "endDate": "2025-06-08",
-                    "duration": 8,
-                    "progress": 100,
-                    "type": "task",
-                    "parent": "1",
-                    "dependencies": [],
-                    "resources": ["Business Analyst", "Product Manager"],
-                    "color": "#2196F3"
-                },
-                {
-                    "id": "3",
-                    "name": "Project Charter Approval",
-                    "startDate": "2025-06-10",
-                    "endDate": "2025-06-10",
-                    "duration": 0,
-                    "progress": 100,
-                    "type": "milestone",
-                    "parent": "1",
-                    "dependencies": ["2"],
-                    "resources": ["Executive Team"],
-                    "color": "#FF9800"
-                },
-                {
-                    "id": "4",
-                    "name": "Team Formation",
-                    "startDate": "2025-06-08",
-                    "endDate": "2025-06-15",
-                    "duration": 8,
-                    "progress": 100,
-                    "type": "task",
-                    "parent": "1",
-                    "dependencies": ["2"],
-                    "resources": ["HR Manager", "Project Manager"],
-                    "color": "#9C27B0"
-                },
-                {
-                    "id": "5",
-                    "name": "Design Phase",
-                    "startDate": "2025-06-16",
-                    "endDate": "2025-07-15",
-                    "duration": 30,
-                    "progress": 75,
-                    "type": "summary",
-                    "parent": null,
-                    "dependencies": ["3"],
-                    "resources": ["Design Team"],
-                    "color": "#4CAF50"
-                },
-                {
-                    "id": "6",
-                    "name": "User Research",
-                    "startDate": "2025-06-16",
-                    "endDate": "2025-06-25",
-                    "duration": 10,
-                    "progress": 100,
-                    "type": "task",
-                    "parent": "5",
-                    "dependencies": ["3"],
-                    "resources": ["UX Researcher"],
-                    "color": "#E91E63"
-                },
-                {
-                    "id": "7",
-                    "name": "Wireframing",
-                    "startDate": "2025-06-26",
-                    "endDate": "2025-07-05",
-                    "duration": 11,
-                    "progress": 80,
-                    "type": "task",
-                    "parent": "5",
-                    "dependencies": ["6"],
-                    "resources": ["UX Designer"],
-                    "color": "#673AB7"
-                },
-                {
-                    "id": "8",
-                    "name": "UI Design",
-                    "startDate": "2025-07-06",
-                    "endDate": "2025-07-15",
-                    "duration": 10,
-                    "progress": 60,
-                    "type": "task",
-                    "parent": "5",
-                    "dependencies": ["7"],
-                    "resources": ["UI Designer"],
-                    "color": "#3F51B5"
-                },
-                {
-                    "id": "9",
-                    "name": "Design Review",
-                    "startDate": "2025-07-16",
-                    "endDate": "2025-07-16",
-                    "duration": 0,
-                    "progress": 0,
-                    "type": "milestone",
-                    "parent": "5",
-                    "dependencies": ["8"],
-                    "resources": ["Stakeholders"],
-                    "color": "#FF9800"
-                },
-                {
-                    "id": "10",
-                    "name": "Development Phase",
-                    "startDate": "2025-07-17",
-                    "endDate": "2025-09-15",
-                    "duration": 58,
-                    "progress": 30,
-                    "type": "summary",
-                    "parent": null,
-                    "dependencies": ["9"],
-                    "resources": ["Development Team"],
-                    "color": "#4CAF50"
-                },
-                {
-                    "id": "11",
-                    "name": "Frontend Development",
-                    "startDate": "2025-07-17",
-                    "endDate": "2025-08-20",
-                    "duration": 32,
-                    "progress": 45,
-                    "type": "task",
-                    "parent": "10",
-                    "dependencies": ["9"],
-                    "resources": ["Frontend Developer 1", "Frontend Developer 2"],
-                    "color": "#00BCD4"
-                },
-                {
-                    "id": "12",
-                    "name": "Backend Development",
-                    "startDate": "2025-07-17",
-                    "endDate": "2025-08-25",
-                    "duration": 37,
-                    "progress": 35,
-                    "type": "task",
-                    "parent": "10",
-                    "dependencies": ["9"],
-                    "resources": ["Backend Developer 1", "Backend Developer 2"],
-                    "color": "#009688"
-                },
-                {
-                    "id": "13",
-                    "name": "Integration Testing",
-                    "startDate": "2025-08-26",
-                    "endDate": "2025-09-10",
-                    "duration": 16,
-                    "progress": 10,
-                    "type": "task",
-                    "parent": "10",
-                    "dependencies": ["11", "12"],
-                    "resources": ["QA Engineer"],
-                    "color": "#FF5722"
-                },
-                {
-                    "id": "14",
-                    "name": "Beta Release",
-                    "startDate": "2025-09-15",
-                    "endDate": "2025-09-15",
-                    "duration": 0,
-                    "progress": 0,
-                    "type": "milestone",
-                    "parent": "10",
-                    "dependencies": ["13"],
-                    "resources": ["Release Manager"],
-                    "color": "#FF9800"
-                },
-                {
-                    "id": "15",
-                    "name": "Testing & Launch",
-                    "startDate": "2025-09-16",
-                    "endDate": "2025-10-15",
-                    "duration": 30,
-                    "progress": 0,
-                    "type": "summary",
-                    "parent": null,
-                    "dependencies": ["14"],
-                    "resources": ["QA Team"],
-                    "color": "#4CAF50"
-                },
-                {
-                    "id": "16",
-                    "name": "User Acceptance Testing",
-                    "startDate": "2025-09-16",
-                    "endDate": "2025-09-30",
-                    "duration": 15,
-                    "progress": 0,
-                    "type": "task",
-                    "parent": "15",
-                    "dependencies": ["14"],
-                    "resources": ["QA Team", "Business Users"],
-                    "color": "#795548"
-                },
-                {
-                    "id": "17",
-                    "name": "Production Deployment",
-                    "startDate": "2025-10-01",
-                    "endDate": "2025-10-10",
-                    "duration": 10,
-                    "progress": 0,
-                    "type": "task",
-                    "parent": "15",
-                    "dependencies": ["16"],
-                    "resources": ["DevOps Engineer"],
-                    "color": "#607D8B"
-                },
-                {
-                    "id": "18",
-                    "name": "Project Launch",
-                    "startDate": "2025-10-15",
-                    "endDate": "2025-10-15",
-                    "duration": 0,
-                    "progress": 0,
-                    "type": "milestone",
-                    "parent": "15",
-                    "dependencies": ["17"],
-                    "resources": ["Marketing Team"],
-                    "color": "#FF9800"
-                }
-            ]
+        // Create a default initiative
+        const defaultInitiative = {
+            id: 'init-' + Date.now(),
+            name: 'Default Initiative',
+            description: 'Initial project initiative',
+            createdAt: new Date().toISOString(),
+            projects: []
         };
         
-        this.tasks = sampleData.tasks.map(task => ({
-            ...task,
-            startDate: new Date(task.startDate),
-            endDate: new Date(task.endDate)
-        }));
+        this.initiatives = [defaultInitiative];
+        this.currentInitiativeId = defaultInitiative.id;
+        
+        // Create simple sample data with current dates
+        const today = new Date();
+        const projectStart = new Date(today);
+        projectStart.setDate(today.getDate() - 7); // Start 7 days ago
+        
+        // Simple sample tasks
+        console.log('Creating sample tasks with dates:');
+        console.log('Project start:', projectStart.toISOString());
+        console.log('Today:', today.toISOString());
+        
+        this.tasks = [
+            {
+                id: "1",
+                name: "Current Sprint",
+                startDate: new Date(projectStart),
+                endDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+                duration: 14,
+                progress: 50,
+                type: "summary",
+                parent: null,
+                dependencies: [],
+                resources: ["Development Team"],
+                color: "#4CAF50",
+                isProject: true,
+                initiativeId: defaultInitiative.id
+            },
+            {
+                id: "2",
+                name: "Feature Development",
+                startDate: new Date(projectStart),
+                endDate: new Date(today),
+                duration: 7,
+                progress: 75,
+                type: "task",
+                parent: "1",
+                dependencies: [],
+                resources: ["Developer 1", "Developer 2"],
+                color: "#2196F3"
+            },
+            {
+                id: "3",
+                name: "Code Review",
+                startDate: new Date(today),
+                endDate: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000),
+                duration: 2,
+                progress: 0,
+                type: "task",
+                parent: "1",
+                dependencies: ["2"],
+                resources: ["Senior Developer"],
+                color: "#FF9800"
+            },
+            {
+                id: "4",
+                name: "Testing",
+                startDate: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000),
+                endDate: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000),
+                duration: 3,
+                progress: 0,
+                type: "task",
+                parent: "1",
+                dependencies: ["3"],
+                resources: ["QA Team"],
+                color: "#9C27B0"
+            },
+            {
+                id: "5",
+                name: "Sprint Release",
+                startDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000),
+                endDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000),
+                duration: 0,
+                progress: 0,
+                type: "milestone",
+                parent: "1",
+                dependencies: ["4"],
+                resources: ["Release Manager"],
+                color: "#F44336"
+            }
+        ];
     }
     
     initializeEventListeners() {
@@ -332,6 +214,10 @@ class GanttChart {
         document.getElementById('exportBtn').addEventListener('click', () => this.exportData());
         document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
         document.getElementById('importFile').addEventListener('change', (e) => this.importData(e));
+        
+        // Initiative events
+        document.getElementById('newInitiativeBtn').addEventListener('click', () => this.showInitiativeModal());
+        document.getElementById('initiativeSelector').addEventListener('change', (e) => this.switchInitiative(e.target.value));
         
         // Zoom controls
         document.querySelectorAll('.zoom-btn').forEach(btn => {
@@ -344,9 +230,19 @@ class GanttChart {
         document.getElementById('taskForm').addEventListener('submit', (e) => this.saveTask(e));
         document.getElementById('modalDelete').addEventListener('click', () => this.deleteTask());
         
+        // Initiative modal events
+        document.getElementById('initiativeModalClose').addEventListener('click', () => this.hideInitiativeModal());
+        document.getElementById('initiativeModalCancel').addEventListener('click', () => this.hideInitiativeModal());
+        document.getElementById('initiativeForm').addEventListener('submit', (e) => this.saveInitiative(e));
+        document.getElementById('initiativeModalDelete').addEventListener('click', () => this.deleteInitiative());
+        
         // Close modal on overlay click
         document.getElementById('taskModal').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) this.hideTaskModal();
+        });
+        
+        document.getElementById('initiativeModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) this.hideInitiativeModal();
         });
         
         // Context menu
@@ -372,12 +268,26 @@ class GanttChart {
     }
     
     render() {
+        this.renderInitiativeSelector();
         this.renderTaskList();
         this.renderTimeline();
         this.renderTimelineHeader();
         this.renderTimelineBars();
         // this.renderDependencies(); // Commented out to remove dependency lines
         this.renderTodayLine();
+    }
+    
+    renderInitiativeSelector() {
+        const selector = document.getElementById('initiativeSelector');
+        selector.innerHTML = '';
+        
+        this.initiatives.forEach(initiative => {
+            const option = document.createElement('option');
+            option.value = initiative.id;
+            option.textContent = initiative.name;
+            option.selected = initiative.id === this.currentInitiativeId;
+            selector.appendChild(option);
+        });
     }
     
     renderTaskList() {
@@ -394,19 +304,38 @@ class GanttChart {
     
     getVisibleTasks() {
         const result = [];
-        const rootTasks = this.tasks.filter(task => !task.parent);
+        // Filter tasks by current initiative
+        const initiativeTasks = this.tasks.filter(task => 
+            task.initiativeId === this.currentInitiativeId || 
+            this.getTaskInitiative(task) === this.currentInitiativeId
+        );
+        const rootTasks = initiativeTasks.filter(task => !task.parent);
         
         const addTaskAndChildren = (task, level = 0) => {
             result.push({ ...task, level });
             
             if (!this.collapsedTasks.has(task.id)) {
-                const children = this.tasks.filter(t => t.parent === task.id);
+                const children = initiativeTasks.filter(t => t.parent === task.id);
                 children.forEach(child => addTaskAndChildren(child, level + 1));
             }
         };
         
         rootTasks.forEach(task => addTaskAndChildren(task));
         return result;
+    }
+    
+    getTaskInitiative(task) {
+        if (task.initiativeId) return task.initiativeId;
+        
+        // Find parent's initiative
+        let currentTask = task;
+        while (currentTask.parent) {
+            const parent = this.tasks.find(t => t.id === currentTask.parent);
+            if (!parent) break;
+            if (parent.initiativeId) return parent.initiativeId;
+            currentTask = parent;
+        }
+        return null;
     }
     
     createTaskRow(task, index) {
@@ -428,7 +357,7 @@ class GanttChart {
         nameDiv.innerHTML = `
             ${hasChildren ? `<button class="task-expand-toggle">${isCollapsed ? '▶' : '▼'}</button>` : '<span class="task-indent"></span>'}
             <div class="task-type-indicator ${task.type}" style="background-color: ${task.color}"></div>
-            <span class="task-name-text">${task.name}</span>
+            <span class="task-name-text">${task.name}${task.isProject ? ' (Project)' : ''}</span>
         `;
         row.appendChild(nameDiv);
         
@@ -604,6 +533,10 @@ class GanttChart {
     formatHeaderDate(date) {
         switch (this.currentZoom) {
             case 'day':
+                // Show day and month for better visibility
+                if (date.getDate() === 1 || date.getDay() === 1) {
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                }
                 return date.getDate().toString();
             case 'week':
                 return `Week ${this.getWeekNumber(date)}`;
@@ -885,6 +818,23 @@ class GanttChart {
         todayLine.style.left = `${todayOffset}px`;
     }
     
+    scrollToToday() {
+        // Scroll the timeline to center on today's date
+        setTimeout(() => {
+            const timelineBody = document.getElementById('timelineBody');
+            const todayOffset = this.getDateOffset(this.today);
+            const viewportWidth = timelineBody.clientWidth;
+            
+            // Center today in the viewport
+            const scrollPosition = todayOffset - (viewportWidth / 2);
+            timelineBody.scrollLeft = Math.max(0, scrollPosition);
+            
+            console.log('Scrolled to today at offset:', todayOffset);
+            console.log('Today date for scrolling:', this.today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+            console.log('Viewport width:', viewportWidth, 'Scroll position:', scrollPosition);
+        }, 100); // Small delay to ensure rendering is complete
+    }
+    
     getDateOffset(date) {
         const diffTime = date - this.timelineStart;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -1045,6 +995,13 @@ class GanttChart {
                 parent: null,
                 ...taskData
             };
+            
+            // If it's a top-level summary task, mark it as a project and associate with current initiative
+            if (!newTask.parent && newTask.type === 'summary') {
+                newTask.isProject = true;
+                newTask.initiativeId = this.currentInitiativeId;
+            }
+            
             this.tasks.push(newTask);
         }
         
@@ -1179,9 +1136,11 @@ class GanttChart {
     exportData() {
         try {
             const dataToExport = {
-                version: '1.0',
+                version: '1.1',
                 exportDate: new Date().toISOString(),
                 projectName: 'Gantt Chart Export',
+                initiatives: this.initiatives,
+                currentInitiativeId: this.currentInitiativeId,
                 tasks: this.tasks.map(task => ({
                     ...task,
                     startDate: task.startDate.toISOString(),
@@ -1220,6 +1179,32 @@ class GanttChart {
                 // Validate data structure
                 if (!data.tasks || !Array.isArray(data.tasks)) {
                     throw new Error('Invalid data format');
+                }
+                
+                // Check version and handle initiatives
+                if (data.version === '1.0' || !data.initiatives) {
+                    // Migrate old data to new format with initiatives
+                    const defaultInitiative = {
+                        id: 'init-' + Date.now(),
+                        name: 'Imported Initiative',
+                        description: 'Imported from file',
+                        createdAt: new Date().toISOString(),
+                        projects: []
+                    };
+                    this.initiatives = [defaultInitiative];
+                    this.currentInitiativeId = defaultInitiative.id;
+                    
+                    // Add initiative ID to all top-level projects
+                    data.tasks.forEach(task => {
+                        if (!task.parent && task.type === 'summary') {
+                            task.isProject = true;
+                            task.initiativeId = defaultInitiative.id;
+                        }
+                    });
+                } else {
+                    // Import initiatives
+                    this.initiatives = data.initiatives;
+                    this.currentInitiativeId = data.currentInitiativeId || this.initiatives[0].id;
                 }
                 
                 // Import tasks
@@ -1267,8 +1252,10 @@ class GanttChart {
             }
             
             const dataToSave = {
-                version: '1.0',
+                version: '1.1',
                 lastSaved: new Date().toISOString(),
+                initiatives: this.initiatives,
+                currentInitiativeId: this.currentInitiativeId,
                 tasks: this.tasks.map(task => ({
                     ...task,
                     startDate: task.startDate.toISOString(),
@@ -1303,6 +1290,32 @@ class GanttChart {
             }
             
             const data = doc.data();
+            
+            // Check version and migrate if needed
+            if (data.version === '1.0' || !data.initiatives) {
+                // Migrate old data to new format with initiatives
+                const defaultInitiative = {
+                    id: 'init-' + Date.now(),
+                    name: 'Default Initiative',
+                    description: 'Migrated from previous version',
+                    createdAt: new Date().toISOString(),
+                    projects: []
+                };
+                this.initiatives = [defaultInitiative];
+                this.currentInitiativeId = defaultInitiative.id;
+                
+                // Add initiative ID to all top-level projects
+                data.tasks.forEach(task => {
+                    if (!task.parent && task.type === 'summary') {
+                        task.isProject = true;
+                        task.initiativeId = defaultInitiative.id;
+                    }
+                });
+            } else {
+                // Load initiatives
+                this.initiatives = data.initiatives || [];
+                this.currentInitiativeId = data.currentInitiativeId || (this.initiatives[0] && this.initiatives[0].id);
+            }
             
             // Restore tasks with proper date objects
             this.tasks = data.tasks.map(task => ({
@@ -1342,8 +1355,10 @@ class GanttChart {
     saveToLocalStorage() {
         try {
             const dataToSave = {
-                version: '1.0',
+                version: '1.1',
                 lastSaved: new Date().toISOString(),
+                initiatives: this.initiatives,
+                currentInitiativeId: this.currentInitiativeId,
                 tasks: this.tasks.map(task => ({
                     ...task,
                     startDate: task.startDate.toISOString(),
@@ -1369,6 +1384,32 @@ class GanttChart {
             if (!savedData) return false;
             
             const data = JSON.parse(savedData);
+            
+            // Check version and migrate if needed
+            if (data.version === '1.0' || !data.initiatives) {
+                // Migrate old data to new format with initiatives
+                const defaultInitiative = {
+                    id: 'init-' + Date.now(),
+                    name: 'Default Initiative',
+                    description: 'Migrated from previous version',
+                    createdAt: new Date().toISOString(),
+                    projects: []
+                };
+                this.initiatives = [defaultInitiative];
+                this.currentInitiativeId = defaultInitiative.id;
+                
+                // Add initiative ID to all top-level projects
+                data.tasks.forEach(task => {
+                    if (!task.parent && task.type === 'summary') {
+                        task.isProject = true;
+                        task.initiativeId = defaultInitiative.id;
+                    }
+                });
+            } else {
+                // Load initiatives
+                this.initiatives = data.initiatives || [];
+                this.currentInitiativeId = data.currentInitiativeId || (this.initiatives[0] && this.initiatives[0].id);
+            }
             
             // Restore tasks with proper date objects
             this.tasks = data.tasks.map(task => ({
@@ -1429,23 +1470,46 @@ class GanttChart {
     }
     
     updateTimelineBounds() {
-        if (this.tasks.length === 0) return;
+        const today = new Date();
         
-        // Find earliest and latest dates
-        let minDate = new Date(this.tasks[0].startDate);
-        let maxDate = new Date(this.tasks[0].endDate);
+        // Default timeline bounds - 3 months before to 9 months after today
+        let minDate = new Date(today);
+        minDate.setMonth(minDate.getMonth() - 3);
+        minDate.setDate(1);
         
-        this.tasks.forEach(task => {
-            if (task.startDate < minDate) minDate = new Date(task.startDate);
-            if (task.endDate > maxDate) maxDate = new Date(task.endDate);
-        });
+        let maxDate = new Date(today);
+        maxDate.setMonth(maxDate.getMonth() + 9);
+        maxDate.setDate(new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0).getDate());
         
-        // Add some padding
-        minDate.setDate(minDate.getDate() - 7);
-        maxDate.setDate(maxDate.getDate() + 30);
+        // If we have tasks, expand the timeline to include them
+        if (this.tasks.length > 0) {
+            this.tasks.forEach(task => {
+                if (task.startDate < minDate) minDate = new Date(task.startDate);
+                if (task.endDate > maxDate) maxDate = new Date(task.endDate);
+            });
+            
+            // Add some padding to task dates
+            minDate.setDate(minDate.getDate() - 7);
+            maxDate.setDate(maxDate.getDate() + 30);
+        }
+        
+        // Always ensure the timeline includes today
+        const todayWithPadding = new Date(today);
+        todayWithPadding.setMonth(todayWithPadding.getMonth() - 1);
+        if (minDate > todayWithPadding) {
+            minDate = todayWithPadding;
+        }
+        
+        const todayWithFuturePadding = new Date(today);
+        todayWithFuturePadding.setMonth(todayWithFuturePadding.getMonth() + 3);
+        if (maxDate < todayWithFuturePadding) {
+            maxDate = todayWithFuturePadding;
+        }
         
         this.timelineStart = minDate;
         this.timelineEnd = maxDate;
+        
+        console.log('Updated timeline bounds:', this.timelineStart.toISOString(), 'to', this.timelineEnd.toISOString());
     }
     
     showNotification(message, type = 'info', duration = 3000) {
@@ -1496,6 +1560,108 @@ class GanttChart {
                 this.showNotification('Failed to clear all data', 'error');
             }
         }
+    }
+    
+    // Initiative methods
+    showInitiativeModal(initiative = null) {
+        this.editingInitiative = initiative;
+        const modal = document.getElementById('initiativeModal');
+        const form = document.getElementById('initiativeForm');
+        const title = document.getElementById('initiativeModalTitle');
+        const deleteBtn = document.getElementById('initiativeModalDelete');
+        const saveBtn = document.getElementById('initiativeModalSave');
+        
+        title.textContent = initiative ? 'Edit Initiative' : 'Create New Initiative';
+        saveBtn.textContent = initiative ? 'Update Initiative' : 'Create Initiative';
+        deleteBtn.style.display = initiative && this.initiatives.length > 1 ? 'block' : 'none';
+        
+        if (initiative) {
+            document.getElementById('initiativeName').value = initiative.name;
+            document.getElementById('initiativeDescription').value = initiative.description || '';
+        } else {
+            form.reset();
+        }
+        
+        modal.classList.add('active');
+        
+        setTimeout(() => {
+            document.getElementById('initiativeName').focus();
+        }, 100);
+    }
+    
+    hideInitiativeModal() {
+        document.getElementById('initiativeModal').classList.remove('active');
+        this.editingInitiative = null;
+    }
+    
+    saveInitiative(e) {
+        e.preventDefault();
+        
+        const initiativeData = {
+            name: document.getElementById('initiativeName').value.trim(),
+            description: document.getElementById('initiativeDescription').value.trim()
+        };
+        
+        if (!initiativeData.name) {
+            alert('Please enter an initiative name');
+            return;
+        }
+        
+        if (this.editingInitiative) {
+            // Update existing initiative
+            const index = this.initiatives.findIndex(i => i.id === this.editingInitiative.id);
+            if (index !== -1) {
+                this.initiatives[index] = { ...this.initiatives[index], ...initiativeData };
+            }
+        } else {
+            // Create new initiative
+            const newInitiative = {
+                id: 'init-' + Date.now(),
+                createdAt: new Date().toISOString(),
+                projects: [],
+                ...initiativeData
+            };
+            this.initiatives.push(newInitiative);
+            
+            // Switch to the new initiative
+            this.currentInitiativeId = newInitiative.id;
+        }
+        
+        this.hideInitiativeModal();
+        this.render();
+        this.autoSave();
+        this.showNotification('Initiative saved successfully', 'success');
+    }
+    
+    deleteInitiative() {
+        if (this.editingInitiative && this.initiatives.length > 1 && 
+            confirm('Are you sure you want to delete this initiative? All associated projects and tasks will be removed.')) {
+            
+            // Remove initiative
+            this.initiatives = this.initiatives.filter(i => i.id !== this.editingInitiative.id);
+            
+            // Remove all tasks associated with this initiative
+            this.tasks = this.tasks.filter(task => 
+                task.initiativeId !== this.editingInitiative.id && 
+                this.getTaskInitiative(task) !== this.editingInitiative.id
+            );
+            
+            // Switch to first available initiative
+            if (this.currentInitiativeId === this.editingInitiative.id) {
+                this.currentInitiativeId = this.initiatives[0].id;
+            }
+            
+            this.hideInitiativeModal();
+            this.render();
+            this.autoSave();
+            this.showNotification('Initiative deleted successfully', 'info');
+        }
+    }
+    
+    switchInitiative(initiativeId) {
+        this.currentInitiativeId = initiativeId;
+        this.render();
+        this.autoSave();
     }
     
     initializeResize() {
