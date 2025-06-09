@@ -214,6 +214,7 @@ class GanttChart {
         document.getElementById('exportBtn').addEventListener('click', () => this.exportData());
         document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
         document.getElementById('importFile').addEventListener('change', (e) => this.importData(e));
+        document.getElementById('clearDataBtn').addEventListener('click', () => this.clearAllData());
         
         // Initiative events
         document.getElementById('newInitiativeBtn').addEventListener('click', () => this.showInitiativeModal());
@@ -472,6 +473,15 @@ class GanttChart {
         }
         
         header.appendChild(headerRow);
+        
+        // Set the total width on the header rows to match timeline width
+        const totalWidth = totalDays * this.dayWidth;
+        headerRow.style.width = `${totalWidth}px`;
+        headerRow.style.minWidth = `${totalWidth}px`;
+        if (monthRow) {
+            monthRow.style.width = `${totalWidth}px`;
+            monthRow.style.minWidth = `${totalWidth}px`;
+        }
     }
     
     getMonthsInRange() {
@@ -553,6 +563,14 @@ class GanttChart {
         
         const totalDays = Math.ceil((this.timelineEnd - this.timelineStart) / (1000 * 60 * 60 * 24));
         
+        // Debug logging
+        console.log('=== TIMELINE RENDERING DEBUG ===');
+        console.log('Timeline Start:', this.timelineStart.toISOString(), this.timelineStart.toLocaleDateString());
+        console.log('Timeline End:', this.timelineEnd.toISOString(), this.timelineEnd.toLocaleDateString());
+        console.log('Total Days:', totalDays);
+        console.log('Day Width:', this.dayWidth);
+        console.log('Total Timeline Width:', totalDays * this.dayWidth, 'px');
+        
         for (let i = 0; i < totalDays; i++) {
             const date = new Date(this.timelineStart);
             date.setDate(date.getDate() + i);
@@ -568,9 +586,22 @@ class GanttChart {
             timelineGrid.appendChild(gridLine);
         }
         
-        // Set minimum width for scrolling
+        // Set minimum width for scrolling on the grid and bars containers
         const timelineBody = document.getElementById('timelineBody');
-        timelineBody.style.minWidth = `${totalDays * this.dayWidth}px`;
+        const timelineBars = document.getElementById('timelineBars');
+        const totalWidth = `${totalDays * this.dayWidth}px`;
+        
+        // Set width on the inner containers to enable scrolling
+        timelineGrid.style.width = totalWidth;
+        timelineGrid.style.minWidth = totalWidth;
+        timelineBars.style.width = totalWidth;
+        timelineBars.style.minWidth = totalWidth;
+        
+        // Log the actual set width
+        console.log('Timeline containers width set to:', totalWidth);
+        console.log('Timeline Body scrollWidth:', timelineBody.scrollWidth);
+        console.log('Timeline Body clientWidth:', timelineBody.clientWidth);
+        console.log('=== END TIMELINE DEBUG ===');
     }
     
     renderTimelineBars() {
@@ -750,6 +781,12 @@ class GanttChart {
         const dependenciesContainer = document.getElementById('timelineDependencies');
         dependenciesContainer.innerHTML = '';
         
+        // Set the container width to match timeline
+        const totalDays = Math.ceil((this.timelineEnd - this.timelineStart) / (1000 * 60 * 60 * 24));
+        const totalWidth = totalDays * this.dayWidth;
+        dependenciesContainer.style.width = `${totalWidth}px`;
+        dependenciesContainer.style.minWidth = `${totalWidth}px`;
+        
         // Create SVG for drawing lines
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.style.width = '100%';
@@ -816,6 +853,17 @@ class GanttChart {
         const todayLine = document.getElementById('todayLine');
         const todayOffset = this.getDateOffset(this.today);
         todayLine.style.left = `${todayOffset}px`;
+        
+        // Ensure today line is within the scrollable area
+        const totalDays = Math.ceil((this.timelineEnd - this.timelineStart) / (1000 * 60 * 60 * 24));
+        const totalWidth = totalDays * this.dayWidth;
+        
+        // If today is beyond the timeline bounds, hide it
+        if (todayOffset < 0 || todayOffset > totalWidth) {
+            todayLine.style.display = 'none';
+        } else {
+            todayLine.style.display = 'block';
+        }
     }
     
     scrollToToday() {
@@ -827,18 +875,40 @@ class GanttChart {
             
             // Center today in the viewport
             const scrollPosition = todayOffset - (viewportWidth / 2);
+            
+            console.log('=== SCROLL TO TODAY DEBUG ===');
+            console.log('Today:', this.today.toISOString(), this.today.toLocaleDateString());
+            console.log('Today offset in timeline:', todayOffset, 'px');
+            console.log('Viewport width:', viewportWidth, 'px');
+            console.log('Calculated scroll position:', scrollPosition, 'px');
+            console.log('Timeline scrollWidth:', timelineBody.scrollWidth, 'px');
+            console.log('Max scrollable position:', timelineBody.scrollWidth - viewportWidth, 'px');
+            
             timelineBody.scrollLeft = Math.max(0, scrollPosition);
             
-            console.log('Scrolled to today at offset:', todayOffset);
-            console.log('Today date for scrolling:', this.today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
-            console.log('Viewport width:', viewportWidth, 'Scroll position:', scrollPosition);
+            console.log('Actual scroll position after setting:', timelineBody.scrollLeft, 'px');
+            console.log('=== END SCROLL DEBUG ===');
         }, 100); // Small delay to ensure rendering is complete
     }
     
     getDateOffset(date) {
         const diffTime = date - this.timelineStart;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays * this.dayWidth;
+        const offset = diffDays * this.dayWidth;
+        
+        // Debug for specific dates
+        if (date === this.today || (date && date.toDateString() === this.today.toDateString())) {
+            console.log('getDateOffset for today:', {
+                date: date.toISOString(),
+                timelineStart: this.timelineStart.toISOString(),
+                diffTime: diffTime,
+                diffDays: diffDays,
+                dayWidth: this.dayWidth,
+                calculatedOffset: offset
+            });
+        }
+        
+        return offset;
     }
     
     getDateFromOffset(offset) {
@@ -1123,6 +1193,20 @@ class GanttChart {
                 this.render();
                 this.autoSave();
             }
+        } else if (e.key === 't' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            // Press 't' to scroll to today
+            this.scrollToToday();
+            this.showNotification('Scrolled to today', 'info', 1000);
+        } else if (e.key === 'ArrowLeft' && e.shiftKey) {
+            // Shift+Left to scroll left by one month
+            const timelineBody = document.getElementById('timelineBody');
+            const scrollAmount = 30 * this.dayWidth; // Approximately one month
+            timelineBody.scrollLeft = Math.max(0, timelineBody.scrollLeft - scrollAmount);
+        } else if (e.key === 'ArrowRight' && e.shiftKey) {
+            // Shift+Right to scroll right by one month
+            const timelineBody = document.getElementById('timelineBody');
+            const scrollAmount = 30 * this.dayWidth; // Approximately one month
+            timelineBody.scrollLeft = Math.min(timelineBody.scrollWidth - timelineBody.clientWidth, timelineBody.scrollLeft + scrollAmount);
         }
     }
     
@@ -1268,9 +1352,8 @@ class GanttChart {
                 })),
                 collapsedTasks: Array.from(this.collapsedTasks),
                 currentZoom: this.currentZoom,
-                selectedTask: this.selectedTask,
-                timelineStart: this.timelineStart.toISOString(),
-                timelineEnd: this.timelineEnd.toISOString()
+                selectedTask: this.selectedTask
+                // Don't save timeline bounds - they should be calculated fresh each time
             };
             
             await this.db.collection('gantt-projects').doc(this.projectId).set(dataToSave);
@@ -1340,13 +1423,9 @@ class GanttChart {
                 this.selectedTask = data.selectedTask;
             }
             
-            // Restore timeline bounds if available
-            if (data.timelineStart && data.timelineEnd) {
-                this.timelineStart = new Date(data.timelineStart);
-                this.timelineEnd = new Date(data.timelineEnd);
-            } else {
-                this.updateTimelineBounds();
-            }
+            // Always update timeline bounds to ensure they include current date
+            // Don't restore old bounds as they might be from previous years
+            this.updateTimelineBounds();
             
             console.log('Data loaded from Firestore');
             return true;
@@ -1477,6 +1556,9 @@ class GanttChart {
     updateTimelineBounds() {
         const today = new Date();
         
+        console.log('=== UPDATE TIMELINE BOUNDS ===');
+        console.log('Current date (today):', today.toISOString(), today.toLocaleDateString());
+        
         // Default timeline bounds - 3 months before to 9 months after today
         let minDate = new Date(today);
         minDate.setMonth(minDate.getMonth() - 3);
@@ -1485,6 +1567,8 @@ class GanttChart {
         let maxDate = new Date(today);
         maxDate.setMonth(maxDate.getMonth() + 9);
         maxDate.setDate(new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0).getDate());
+        
+        console.log('Initial bounds - Min:', minDate.toLocaleDateString(), 'Max:', maxDate.toLocaleDateString());
         
         // If we have tasks, expand the timeline to include them
         if (this.tasks.length > 0) {
@@ -1496,25 +1580,33 @@ class GanttChart {
             // Add some padding to task dates
             minDate.setDate(minDate.getDate() - 7);
             maxDate.setDate(maxDate.getDate() + 30);
+            
+            console.log('After task expansion - Min:', minDate.toLocaleDateString(), 'Max:', maxDate.toLocaleDateString());
         }
         
-        // Always ensure the timeline includes today
+        // Always ensure the timeline includes today with proper padding
         const todayWithPadding = new Date(today);
         todayWithPadding.setMonth(todayWithPadding.getMonth() - 1);
         if (minDate > todayWithPadding) {
             minDate = todayWithPadding;
+            console.log('Adjusted min date to include today with padding:', minDate.toLocaleDateString());
         }
         
         const todayWithFuturePadding = new Date(today);
         todayWithFuturePadding.setMonth(todayWithFuturePadding.getMonth() + 3);
         if (maxDate < todayWithFuturePadding) {
             maxDate = todayWithFuturePadding;
+            console.log('Adjusted max date to include future padding:', maxDate.toLocaleDateString());
         }
         
-        this.timelineStart = minDate;
-        this.timelineEnd = maxDate;
+        // Ensure we're setting proper Date objects
+        this.timelineStart = new Date(minDate);
+        this.timelineEnd = new Date(maxDate);
         
-        console.log('Updated timeline bounds:', this.timelineStart.toISOString(), 'to', this.timelineEnd.toISOString());
+        console.log('Final timeline bounds:');
+        console.log('  Start:', this.timelineStart.toISOString(), this.timelineStart.toLocaleDateString());
+        console.log('  End:', this.timelineEnd.toISOString(), this.timelineEnd.toLocaleDateString());
+        console.log('=== END UPDATE TIMELINE BOUNDS ===');
     }
     
     showNotification(message, type = 'info', duration = 3000) {

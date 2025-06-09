@@ -941,7 +941,7 @@ select.form-control {
 .timeline-header {
   background-color: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: hidden;
   flex-shrink: 0;
   min-height: 48px;
@@ -1026,9 +1026,9 @@ select.form-control {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
   height: 100%;
   pointer-events: none;
+  /* Width will be set dynamically by JavaScript */
 }
 
 .timeline-grid-line {
@@ -1047,6 +1047,7 @@ select.form-control {
 .timeline-bars {
   position: relative;
   min-height: 100%;
+  /* Width will be set dynamically by JavaScript */
 }
 
 .timeline-bar {
@@ -1144,10 +1145,10 @@ select.form-control {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
   height: 100%;
   pointer-events: none;
   z-index: 50;
+  /* Width will be set dynamically to match timeline */
 }
 
 .dependency-line {
