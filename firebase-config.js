@@ -6,7 +6,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAEAEafI_c-CgVGQM8p3kaqX8uZfj0mSzs",
   authDomain: "gantt-ff731.firebaseapp.com",
   projectId: "gantt-ff731",
-  storageBucket: "gantt-ff731.firebasestorage.app",
+  storageBucket: "gantt-ff731.appspot.com",
   messagingSenderId: "609152736901",
   appId: "1:609152736901:web:d598996ca3da50f95253ec",
   measurementId: "G-D1E56LVQN5"
