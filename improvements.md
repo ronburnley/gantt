@@ -21,11 +21,11 @@ saveData() {
         })),
         collapsedTasks: Array.from(this.collapsedTasks)
     };
-    localStorage.setItem('ganttData', JSON.stringify(dataToSave));
+    localStorage.setItem('ganttChartData', JSON.stringify(dataToSave));
 }
 
 loadData() {
-    const saved = localStorage.getItem('ganttData');
+    const saved = localStorage.getItem('ganttChartData');
     if (saved) {
         const data = JSON.parse(saved);
         this.tasks = data.tasks.map(task => ({
