@@ -740,9 +740,9 @@ class GanttChart {
             this.tasks[taskIndex].duration = Math.round(newWidth / this.dayWidth);
         }
         
-        // Re-render to update the task list
-        this.renderTaskList();
-        // this.renderDependencies(); // Removed dependency rendering
+        // Re-render to update the task list and adjust timeline range
+        this.updateTimelineBounds();
+        this.render();
         this.autoSave();
     }
     
@@ -1006,6 +1006,8 @@ class GanttChart {
         }
         
         this.hideTaskModal();
+        // Update timeline bounds in case task dates moved outside the current range
+        this.updateTimelineBounds();
         this.render();
         this.autoSave();
         this.showNotification('Task saved successfully', 'success');
@@ -1022,6 +1024,8 @@ class GanttChart {
             });
             
             this.hideTaskModal();
+            // Adjust timeline in case removing this task shrinks the range
+            this.updateTimelineBounds();
             this.render();
             this.autoSave();
             this.showNotification('Task deleted successfully', 'info');
@@ -1058,6 +1062,7 @@ class GanttChart {
                     this.tasks.forEach(t => {
                         t.dependencies = t.dependencies.filter(depId => depId !== taskId);
                     });
+                    this.updateTimelineBounds();
                     this.render();
                     this.autoSave();
                 }
