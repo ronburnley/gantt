@@ -5,6 +5,7 @@ class GanttChart {
         this.currentZoom = 'day';
         this.selectedTask = null;
         this.editingTask = null;
+        this.newTaskParent = null;
         this.dragState = null;
         this.collapsedTasks = new Set();
         
@@ -951,8 +952,9 @@ class GanttChart {
         this.autoSave();
     }
     
-    showTaskModal(task = null) {
+    showTaskModal(task = null, parentId = null) {
         this.editingTask = task;
+        this.newTaskParent = parentId;
         const modal = document.getElementById('taskModal');
         const form = document.getElementById('taskForm');
         const title = document.getElementById('modalTitle');
@@ -1002,6 +1004,7 @@ class GanttChart {
     hideTaskModal() {
         document.getElementById('taskModal').classList.remove('active');
         this.editingTask = null;
+        this.newTaskParent = null;
     }
     
     saveTask(e) {
@@ -1042,7 +1045,7 @@ class GanttChart {
             // Add new task
             const newTask = {
                 id: Date.now().toString(),
-                parent: null,
+                parent: this.newTaskParent,
                 ...taskData
             };
             this.tasks.push(newTask);
@@ -1107,7 +1110,7 @@ class GanttChart {
                 break;
             case 'add-child':
                 // Create a child task
-                this.showTaskModal();
+                this.showTaskModal(null, taskId);
                 break;
             case 'mark-complete':
                 const taskIndex = this.tasks.findIndex(t => t.id === taskId);
