@@ -4,8 +4,9 @@
   "description": "Interactive Gantt Chart Application",
   "main": "index.html",
   "scripts": {
-    "start": "npx http-server -p 8080 -o",
-    "dev": "npx live-server --port=8080"
+    "generate-env": "node generateEnv.js",
+    "start": "npm run generate-env && npx http-server -p 8080 -o",
+    "dev": "npm run generate-env && npx live-server --port=8080"
   },
   "keywords": ["gantt", "chart", "project", "management"],
   "author": "",

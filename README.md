@@ -16,6 +16,11 @@ A fully-featured interactive Gantt chart application built with vanilla JavaScri
 - Context menus and tooltips
 - Dark mode support
 
+## Firebase Configuration
+
+1. Copy `.env.example` to `.env` and fill in your Firebase credentials.
+2. Running any npm script will automatically generate `env.js` from your `.env` file.
+
 ## Running the Application
 
 ### Option 1: Using npm (with live reload)

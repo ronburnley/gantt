@@ -1,15 +1,15 @@
 // Firebase configuration
-// IMPORTANT: Replace these values with your actual Firebase project configuration
-// You can find these in your Firebase Console under Project Settings > General > Your apps > SDK setup and configuration
+// Values are loaded from environment variables generated in env.js
+// See README for setup instructions.
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAEAEafI_c-CgVGQM8p3kaqX8uZfj0mSzs",
-  authDomain: "gantt-ff731.firebaseapp.com",
-  projectId: "gantt-ff731",
-  storageBucket: "gantt-ff731.firebasestorage.app",
-  messagingSenderId: "609152736901",
-  appId: "1:609152736901:web:d598996ca3da50f95253ec",
-  measurementId: "G-D1E56LVQN5"
+  apiKey: window._env_.FIREBASE_API_KEY,
+  authDomain: window._env_.FIREBASE_AUTH_DOMAIN,
+  projectId: window._env_.FIREBASE_PROJECT_ID,
+  storageBucket: window._env_.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: window._env_.FIREBASE_MESSAGING_SENDER_ID,
+  appId: window._env_.FIREBASE_APP_ID,
+  measurementId: window._env_.FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
