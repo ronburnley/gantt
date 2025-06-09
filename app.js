@@ -8,7 +8,8 @@ class GanttChart {
         this.dragState = null;
         this.collapsedTasks = new Set();
         
-        this.timelineStart = new Date('2025-06-01');
+        // Default timeline covers the entire year 2025
+        this.timelineStart = new Date('2025-01-01');
         this.timelineEnd = new Date('2025-12-31');
         this.today = new Date();
         
@@ -918,8 +919,16 @@ class GanttChart {
                 this.dayWidth = 10;
                 break;
         }
-        
+
         this.render();
+
+        // Reset scroll position to the start when zoom changes
+        const timelineBody = document.getElementById('timelineBody');
+        const timelineHeader = document.getElementById('timelineHeader');
+        if (timelineBody && timelineHeader) {
+            timelineBody.scrollLeft = 0;
+            timelineHeader.scrollLeft = 0;
+        }
         this.autoSave();
     }
     
@@ -1443,7 +1452,13 @@ class GanttChart {
         // Add some padding
         minDate.setDate(minDate.getDate() - 7);
         maxDate.setDate(maxDate.getDate() + 30);
-        
+
+        // Ensure the visible range always includes the full year 2025
+        const yearStart = new Date('2025-01-01');
+        const yearEnd = new Date('2025-12-31');
+        if (minDate > yearStart) minDate = yearStart;
+        if (maxDate < yearEnd) maxDate = yearEnd;
+
         this.timelineStart = minDate;
         this.timelineEnd = maxDate;
     }
