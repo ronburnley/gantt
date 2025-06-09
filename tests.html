@@ -268,9 +268,12 @@ Arrow keys: Navigate tasks</pre>
         function testProgressValidation() {
             const validProgress = [0, 50, 100];
             const invalidProgress = [-10, 150, 'abc'];
-            
+
             for (let p of validProgress) {
                 if (p < 0 || p > 100) return false;
+            }
+            for (let p of invalidProgress) {
+                if (!(p < 0 || p > 100)) return false;
             }
             return true;
         }
