@@ -3,114 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2025 Date Test</title>
+    <title>Gantt Chart 2025 Test Data Verification</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
-        .success { background-color: #d4edda; border: 1px solid #c3e6cb; }
-        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; }
-        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2 { color: #333; }
+        .initiative {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .task {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #2196F3;
+            background: #f8f8f8;
+        }
+        .milestone {
+            border-left-color: #F44336;
+            background: #fef8f8;
+        }
+        .summary {
+            border-left-color: #4CAF50;
+            background: #f8fef8;
+            font-weight: bold;
+        }
+        .progress {
+            display: inline-block;
+            width: 200px;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-left: 10px;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #4CAF50;
+            transition: width 0.3s;
+        }
+        .date-range {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .resources {
+            color: #888;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #1976D2; }
+        .summary-stats {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>Gantt Chart 2025 Date Visibility Test</h1>
+    <h1>Gantt Chart 2025 Test Data Verification</h1>
     
-    <div id="test-results"></div>
+    <div class="summary-stats">
+        <div class="stat-item">
+            <div class="stat-value" id="totalInitiatives">0</div>
+            <div class="stat-label">Initiatives</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="totalTasks">0</div>
+            <div class="stat-label">Total Tasks</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="totalMilestones">0</div>
+            <div class="stat-label">Milestones</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="avgProgress">0%</div>
+            <div class="stat-label">Average Progress</div>
+        </div>
+    </div>
     
-    <button onclick="clearLocalStorage()">Clear All Local Data</button>
-    <button onclick="runTests()">Run Tests</button>
+    <button onclick="loadGanttData()">Load Gantt Data</button>
+    <button onclick="clearLocalStorage()">Clear Local Storage</button>
+    <button onclick="window.open('index.html', '_blank')">Open Gantt Chart</button>
+    
+    <div id="initiatives"></div>
     
     <script>
-        function addResult(message, type = 'success') {
-            const div = document.createElement('div');
-            div.className = `test-result ${type}`;
-            div.textContent = message;
-            document.getElementById('test-results').appendChild(div);
+        // Load app.js to get the test data
+        const script = document.createElement('script');
+        script.src = 'app.js';
+        document.head.appendChild(script);
+        
+        function loadGanttData() {
+            // Create a temporary instance to get the test data
+            const tempGantt = new GanttChart();
+            
+            // Clear existing data and reinitialize with test data
+            localStorage.removeItem('ganttChartData');
+            tempGantt.initializeData();
+            
+            const initiatives = tempGantt.initiatives;
+            const tasks = tempGantt.tasks;
+            
+            // Update statistics
+            document.getElementById('totalInitiatives').textContent = initiatives.length;
+            document.getElementById('totalTasks').textContent = tasks.length;
+            document.getElementById('totalMilestones').textContent = tasks.filter(t => t.type === 'milestone').length;
+            
+            const avgProgress = tasks.reduce((sum, task) => sum + task.progress, 0) / tasks.length;
+            document.getElementById('avgProgress').textContent = Math.round(avgProgress) + '%';
+            
+            // Display initiatives and their tasks
+            const container = document.getElementById('initiatives');
+            container.innerHTML = '';
+            
+            initiatives.forEach(initiative => {
+                const initiativeDiv = document.createElement('div');
+                initiativeDiv.className = 'initiative';
+                
+                const initiativeTasks = tasks.filter(t => t.initiativeId === initiative.id);
+                const projectTasks = initiativeTasks.filter(t => t.isProject);
+                
+                initiativeDiv.innerHTML = `
+                    <h2>${initiative.name}</h2>
+                    <p>${initiative.description}</p>
+                    <p><strong>Tasks:</strong> ${initiativeTasks.length}</p>
+                `;
+                
+                // Display tasks for this initiative
+                initiativeTasks.forEach(task => {
+                    const taskDiv = document.createElement('div');
+                    taskDiv.className = `task ${task.type}`;
+                    
+                    const startDate = new Date(task.startDate).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric' 
+                    });
+                    const endDate = new Date(task.endDate).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric' 
+                    });
+                    
+                    taskDiv.innerHTML = `
+                        <div>
+                            <strong>${task.name}</strong>
+                            <span class="date-range">(${startDate} - ${endDate})</span>
+                            ${task.type === 'milestone' ? ' 🎯' : ''}
+                        </div>
+                        ${task.type !== 'milestone' ? `
+                            <div>
+                                Progress: ${task.progress}%
+                                <div class="progress">
+                                    <div class="progress-bar" style="width: ${task.progress}%"></div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        <div class="resources">Resources: ${task.resources.join(', ')}</div>
+                        ${task.dependencies.length > 0 ? `<div class="resources">Dependencies: ${task.dependencies.join(', ')}</div>` : ''}
+                    `;
+                    
+                    initiativeDiv.appendChild(taskDiv);
+                });
+                
+                container.appendChild(initiativeDiv);
+            });
+            
+            alert('Test data loaded! You can now open the Gantt Chart to see the visualization.');
         }
         
         function clearLocalStorage() {
             localStorage.removeItem('ganttChartData');
-            addResult('Cleared localStorage data', 'warning');
+            alert('Local storage cleared. The next time you open the Gantt chart, it will load the test data.');
         }
         
-        function runTests() {
-            document.getElementById('test-results').innerHTML = '';
-            
-            // Test 1: Current date
-            const today = new Date();
-            addResult(`Current system date: ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
-            
-            if (today.getFullYear() === 2025) {
-                addResult('✓ System date is in 2025', 'success');
-            } else {
-                addResult(`⚠ System date is in ${today.getFullYear()}, not 2025`, 'warning');
-            }
-            
-            // Test 2: Timeline calculation
-            const timelineStart = new Date(today);
-            timelineStart.setMonth(timelineStart.getMonth() - 3);
-            timelineStart.setDate(1);
-            
-            const timelineEnd = new Date(today);
-            timelineEnd.setMonth(timelineEnd.getMonth() + 9);
-            timelineEnd.setDate(new Date(timelineEnd.getFullYear(), timelineEnd.getMonth() + 1, 0).getDate());
-            
-            addResult(`Timeline start: ${timelineStart.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
-            addResult(`Timeline end: ${timelineEnd.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
-            
-            if (timelineStart.getFullYear() === 2025 && timelineEnd.getFullYear() >= 2025) {
-                addResult('✓ Timeline includes 2025 dates', 'success');
-            } else {
-                addResult('✗ Timeline may not include 2025 dates properly', 'error');
-            }
-            
-            // Test 3: Sample data generation
-            const projectStart = new Date(today);
-            projectStart.setDate(today.getDate() - 7);
-            
-            addResult(`Sample project start: ${projectStart.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
-            
-            if (projectStart.getFullYear() === 2025) {
-                addResult('✓ Sample data will be in 2025', 'success');
-            } else {
-                addResult('✗ Sample data will not be in 2025', 'error');
-            }
-            
-            // Test 4: Check localStorage
-            const savedData = localStorage.getItem('ganttChartData');
-            if (savedData) {
-                try {
-                    const data = JSON.parse(savedData);
-                    if (data.tasks && data.tasks.length > 0) {
-                        const firstTaskDate = new Date(data.tasks[0].startDate);
-                        addResult(`Saved data first task: ${firstTaskDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
-                        
-                        if (firstTaskDate.getFullYear() >= 2025) {
-                            addResult('✓ Saved data contains 2025 dates', 'success');
-                        } else {
-                            addResult('⚠ Saved data contains old dates - will be cleared', 'warning');
-                        }
-                    }
-                } catch (e) {
-                    addResult('✗ Error parsing saved data', 'error');
-                }
-            } else {
-                addResult('No saved data found - will use fresh 2025 sample data', 'success');
-            }
-            
-            // Test 5: Date offset calculation
-            const todayOffset = Math.ceil((today - timelineStart) / (1000 * 60 * 60 * 24)) * 40;
-            addResult(`Today's position in timeline: ${todayOffset}px from start`);
-            
-            if (todayOffset > 0) {
-                addResult('✓ Today should be visible in timeline', 'success');
-            } else {
-                addResult('✗ Today may not be positioned correctly', 'error');
-            }
-        }
-        
-        // Run tests on load
-        runTests();
+        // Auto-load data when page loads
+        window.addEventListener('load', () => {
+            setTimeout(loadGanttData, 1000);
+        });
     </script>
 </body>
 </html>

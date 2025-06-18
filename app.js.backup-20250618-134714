@@ -113,490 +113,95 @@ class GanttChart {
     }
     
     initializeData() {
-        // Create initiatives for June-December 2025
-        const initiative1 = {
-            id: 'init-product-launch',
-            name: 'Product Launch Q3 2025',
-            description: 'New product launch initiative for Q3 2025',
+        // Create a default initiative
+        const defaultInitiative = {
+            id: 'init-' + Date.now(),
+            name: 'Default Initiative',
+            description: 'Initial project initiative',
             createdAt: new Date().toISOString(),
             projects: []
         };
         
-        const initiative2 = {
-            id: 'init-infrastructure',
-            name: 'Infrastructure Upgrade',
-            description: 'Major infrastructure upgrade and migration project',
-            createdAt: new Date().toISOString(),
-            projects: []
-        };
+        this.initiatives = [defaultInitiative];
+        this.currentInitiativeId = defaultInitiative.id;
         
-        const initiative3 = {
-            id: 'init-team-expansion',
-            name: 'Team Expansion',
-            description: 'Hiring and onboarding new team members',
-            createdAt: new Date().toISOString(),
-            projects: []
-        };
+        // Create simple sample data with current dates
+        const today = new Date();
+        const projectStart = new Date(today);
+        projectStart.setDate(today.getDate() - 7); // Start 7 days ago
         
-        const initiative4 = {
-            id: 'init-year-end',
-            name: 'Year-End Planning',
-            description: 'Strategic planning and reviews for year-end',
-            createdAt: new Date().toISOString(),
-            projects: []
-        };
-        
-        this.initiatives = [initiative1, initiative2, initiative3, initiative4];
-        this.currentInitiativeId = initiative1.id;
-        
-        // Create elaborate test project data for June-December 2025
-        console.log('Creating test project data for June-December 2025');
+        // Simple sample tasks
+        console.log('Creating sample tasks with dates:');
+        console.log('Project start:', projectStart.toISOString());
+        console.log('Today:', today.toISOString());
         
         this.tasks = [
-            // Initiative 1: Product Launch Q3 2025
             {
-                id: "pl-1",
-                name: "Product Launch Q3 2025",
-                startDate: new Date("2025-06-01"),
-                endDate: new Date("2025-10-31"),
-                duration: 152,
-                progress: 25,
-                type: "summary",
-                parent: null,
-                dependencies: [],
-                resources: ["Product Team"],
-                color: "#4CAF50",
-                isProject: true,
-                initiativeId: initiative1.id
-            },
-            {
-                id: "pl-2",
-                name: "Market Research",
-                startDate: new Date("2025-06-01"),
-                endDate: new Date("2025-06-30"),
-                duration: 30,
-                progress: 85,
-                type: "task",
-                parent: "pl-1",
-                dependencies: [],
-                resources: ["Research Team", "Analytics"],
-                color: "#2196F3",
-                initiativeId: initiative1.id
-            },
-            {
-                id: "pl-3",
-                name: "Product Design Phase",
-                startDate: new Date("2025-06-15"),
-                endDate: new Date("2025-07-31"),
-                duration: 47,
-                progress: 65,
-                type: "task",
-                parent: "pl-1",
-                dependencies: [],
-                resources: ["Design Team", "UX Designer"],
-                color: "#00BCD4",
-                initiativeId: initiative1.id
-            },
-            {
-                id: "pl-4",
-                name: "Development Sprint 1",
-                startDate: new Date("2025-07-01"),
-                endDate: new Date("2025-07-31"),
-                duration: 31,
-                progress: 40,
-                type: "task",
-                parent: "pl-1",
-                dependencies: ["pl-3"],
-                resources: ["Dev Team Alpha", "Backend Team"],
-                color: "#3F51B5",
-                initiativeId: initiative1.id
-            },
-            {
-                id: "pl-5",
-                name: "Development Sprint 2",
-                startDate: new Date("2025-08-01"),
-                endDate: new Date("2025-08-31"),
-                duration: 31,
-                progress: 10,
-                type: "task",
-                parent: "pl-1",
-                dependencies: ["pl-4"],
-                resources: ["Dev Team Beta", "Frontend Team"],
-                color: "#673AB7",
-                initiativeId: initiative1.id
-            },
-            {
-                id: "pl-6",
-                name: "Testing & QA",
-                startDate: new Date("2025-09-01"),
-                endDate: new Date("2025-09-15"),
-                duration: 15,
-                progress: 0,
-                type: "task",
-                parent: "pl-1",
-                dependencies: ["pl-5"],
-                resources: ["QA Team", "Test Automation"],
-                color: "#9C27B0",
-                initiativeId: initiative1.id
-            },
-            {
-                id: "pl-7",
-                name: "Marketing Campaign",
-                startDate: new Date("2025-08-15"),
-                endDate: new Date("2025-09-30"),
-                duration: 47,
-                progress: 20,
-                type: "task",
-                parent: "pl-1",
-                dependencies: ["pl-2"],
-                resources: ["Marketing Team", "Content Creators"],
-                color: "#E91E63",
-                initiativeId: initiative1.id
-            },
-            {
-                id: "pl-8",
-                name: "Launch Event",
-                startDate: new Date("2025-10-01"),
-                endDate: new Date("2025-10-01"),
-                duration: 0,
-                progress: 0,
-                type: "milestone",
-                parent: "pl-1",
-                dependencies: ["pl-6", "pl-7"],
-                resources: ["Event Team"],
-                color: "#F44336",
-                initiativeId: initiative1.id
-            },
-            {
-                id: "pl-9",
-                name: "Post-Launch Support",
-                startDate: new Date("2025-10-02"),
-                endDate: new Date("2025-10-31"),
-                duration: 30,
-                progress: 0,
-                type: "task",
-                parent: "pl-1",
-                dependencies: ["pl-8"],
-                resources: ["Support Team", "DevOps"],
-                color: "#FF5722",
-                initiativeId: initiative1.id
-            },
-            
-            // Initiative 2: Infrastructure Upgrade
-            {
-                id: "iu-1",
-                name: "Infrastructure Upgrade",
-                startDate: new Date("2025-06-01"),
-                endDate: new Date("2025-09-30"),
-                duration: 122,
-                progress: 30,
-                type: "summary",
-                parent: null,
-                dependencies: [],
-                resources: ["Infrastructure Team"],
-                color: "#FF9800",
-                isProject: true,
-                initiativeId: initiative2.id
-            },
-            {
-                id: "iu-2",
-                name: "Infrastructure Assessment",
-                startDate: new Date("2025-06-01"),
-                endDate: new Date("2025-06-15"),
-                duration: 15,
-                progress: 100,
-                type: "task",
-                parent: "iu-1",
-                dependencies: [],
-                resources: ["System Architects", "DevOps"],
-                color: "#FFC107",
-                initiativeId: initiative2.id
-            },
-            {
-                id: "iu-3",
-                name: "Migration Planning",
-                startDate: new Date("2025-06-16"),
-                endDate: new Date("2025-06-30"),
-                duration: 15,
-                progress: 90,
-                type: "task",
-                parent: "iu-1",
-                dependencies: ["iu-2"],
-                resources: ["Project Managers", "Tech Leads"],
-                color: "#FFEB3B",
-                initiativeId: initiative2.id
-            },
-            {
-                id: "iu-4",
-                name: "Server Upgrades",
-                startDate: new Date("2025-07-01"),
-                endDate: new Date("2025-07-31"),
-                duration: 31,
+                id: "1",
+                name: "Current Sprint",
+                startDate: new Date(projectStart),
+                endDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+                duration: 14,
                 progress: 50,
-                type: "task",
-                parent: "iu-1",
-                dependencies: ["iu-3"],
-                resources: ["Infrastructure Team", "Network Engineers"],
-                color: "#CDDC39",
-                initiativeId: initiative2.id
-            },
-            {
-                id: "iu-5",
-                name: "Database Migration",
-                startDate: new Date("2025-08-01"),
-                endDate: new Date("2025-08-15"),
-                duration: 15,
-                progress: 15,
-                type: "task",
-                parent: "iu-1",
-                dependencies: ["iu-4"],
-                resources: ["Database Team", "Data Engineers"],
-                color: "#8BC34A",
-                initiativeId: initiative2.id
-            },
-            {
-                id: "iu-6",
-                name: "Performance Testing",
-                startDate: new Date("2025-08-16"),
-                endDate: new Date("2025-08-31"),
-                duration: 16,
-                progress: 0,
-                type: "task",
-                parent: "iu-1",
-                dependencies: ["iu-5"],
-                resources: ["Performance Team", "QA Engineers"],
-                color: "#4CAF50",
-                initiativeId: initiative2.id
-            },
-            {
-                id: "iu-7",
-                name: "Monitoring Setup",
-                startDate: new Date("2025-09-01"),
-                endDate: new Date("2025-09-15"),
-                duration: 15,
-                progress: 0,
-                type: "task",
-                parent: "iu-1",
-                dependencies: ["iu-6"],
-                resources: ["DevOps", "SRE Team"],
-                color: "#009688",
-                initiativeId: initiative2.id
-            },
-            {
-                id: "iu-8",
-                name: "Documentation",
-                startDate: new Date("2025-09-16"),
-                endDate: new Date("2025-09-30"),
-                duration: 15,
-                progress: 0,
-                type: "task",
-                parent: "iu-1",
-                dependencies: ["iu-7"],
-                resources: ["Technical Writers", "DevOps"],
-                color: "#00BCD4",
-                initiativeId: initiative2.id
-            },
-            
-            // Initiative 3: Team Expansion
-            {
-                id: "te-1",
-                name: "Team Expansion",
-                startDate: new Date("2025-06-01"),
-                endDate: new Date("2025-11-30"),
-                duration: 183,
-                progress: 35,
                 type: "summary",
                 parent: null,
                 dependencies: [],
-                resources: ["HR Team"],
-                color: "#3F51B5",
-                isProject: true,
-                initiativeId: initiative3.id
-            },
-            {
-                id: "te-2",
-                name: "Hiring Planning",
-                startDate: new Date("2025-06-01"),
-                endDate: new Date("2025-06-15"),
-                duration: 15,
-                progress: 100,
-                type: "task",
-                parent: "te-1",
-                dependencies: [],
-                resources: ["HR Team", "Department Heads"],
-                color: "#2196F3",
-                initiativeId: initiative3.id
-            },
-            {
-                id: "te-3",
-                name: "Job Postings",
-                startDate: new Date("2025-06-16"),
-                endDate: new Date("2025-07-15"),
-                duration: 30,
-                progress: 80,
-                type: "task",
-                parent: "te-1",
-                dependencies: ["te-2"],
-                resources: ["HR Team", "Recruiting"],
-                color: "#03A9F4",
-                initiativeId: initiative3.id
-            },
-            {
-                id: "te-4",
-                name: "Interview Process",
-                startDate: new Date("2025-07-01"),
-                endDate: new Date("2025-08-31"),
-                duration: 62,
-                progress: 45,
-                type: "task",
-                parent: "te-1",
-                dependencies: ["te-3"],
-                resources: ["Hiring Managers", "Technical Interviewers"],
-                color: "#00BCD4",
-                initiativeId: initiative3.id
-            },
-            {
-                id: "te-5",
-                name: "Onboarding Program",
-                startDate: new Date("2025-09-01"),
-                endDate: new Date("2025-09-30"),
-                duration: 30,
-                progress: 0,
-                type: "task",
-                parent: "te-1",
-                dependencies: ["te-4"],
-                resources: ["HR Team", "Team Leads"],
-                color: "#009688",
-                initiativeId: initiative3.id
-            },
-            {
-                id: "te-6",
-                name: "Training Sessions",
-                startDate: new Date("2025-10-01"),
-                endDate: new Date("2025-10-31"),
-                duration: 31,
-                progress: 0,
-                type: "task",
-                parent: "te-1",
-                dependencies: ["te-5"],
-                resources: ["Training Team", "Senior Engineers"],
+                resources: ["Development Team"],
                 color: "#4CAF50",
-                initiativeId: initiative3.id
-            },
-            {
-                id: "te-7",
-                name: "Team Integration",
-                startDate: new Date("2025-11-01"),
-                endDate: new Date("2025-11-30"),
-                duration: 30,
-                progress: 0,
-                type: "task",
-                parent: "te-1",
-                dependencies: ["te-6"],
-                resources: ["Team Leads", "Mentors"],
-                color: "#8BC34A",
-                initiativeId: initiative3.id
-            },
-            
-            // Initiative 4: Year-End Planning
-            {
-                id: "ye-1",
-                name: "Year-End Planning",
-                startDate: new Date("2025-10-01"),
-                endDate: new Date("2025-12-31"),
-                duration: 92,
-                progress: 0,
-                type: "summary",
-                parent: null,
-                dependencies: [],
-                resources: ["Executive Team"],
-                color: "#795548",
                 isProject: true,
-                initiativeId: initiative4.id
+                initiativeId: defaultInitiative.id
             },
             {
-                id: "ye-2",
-                name: "Budget Review",
-                startDate: new Date("2025-10-01"),
-                endDate: new Date("2025-10-15"),
-                duration: 15,
-                progress: 0,
+                id: "2",
+                name: "Feature Development",
+                startDate: new Date(projectStart),
+                endDate: new Date(today),
+                duration: 7,
+                progress: 75,
                 type: "task",
-                parent: "ye-1",
+                parent: "1",
                 dependencies: [],
-                resources: ["Finance Team", "Department Heads"],
-                color: "#9E9E9E",
-                initiativeId: initiative4.id
+                resources: ["Developer 1", "Developer 2"],
+                color: "#2196F3"
             },
             {
-                id: "ye-3",
-                name: "Strategic Planning",
-                startDate: new Date("2025-10-16"),
-                endDate: new Date("2025-10-31"),
-                duration: 16,
+                id: "3",
+                name: "Code Review",
+                startDate: new Date(today),
+                endDate: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000),
+                duration: 2,
                 progress: 0,
                 type: "task",
-                parent: "ye-1",
-                dependencies: ["ye-2"],
-                resources: ["Executive Team", "Strategy Consultants"],
-                color: "#607D8B",
-                initiativeId: initiative4.id
+                parent: "1",
+                dependencies: ["2"],
+                resources: ["Senior Developer"],
+                color: "#FF9800"
             },
             {
-                id: "ye-4",
-                name: "Department Reviews",
-                startDate: new Date("2025-11-01"),
-                endDate: new Date("2025-11-15"),
-                duration: 15,
+                id: "4",
+                name: "Testing",
+                startDate: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000),
+                endDate: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000),
+                duration: 3,
                 progress: 0,
                 type: "task",
-                parent: "ye-1",
-                dependencies: ["ye-3"],
-                resources: ["Department Heads", "HR Team"],
-                color: "#455A64",
-                initiativeId: initiative4.id
+                parent: "1",
+                dependencies: ["3"],
+                resources: ["QA Team"],
+                color: "#9C27B0"
             },
             {
-                id: "ye-5",
-                name: "2026 Roadmap",
-                startDate: new Date("2025-11-16"),
-                endDate: new Date("2025-11-30"),
-                duration: 15,
-                progress: 0,
-                type: "task",
-                parent: "ye-1",
-                dependencies: ["ye-4"],
-                resources: ["Product Team", "Engineering Leads"],
-                color: "#37474F",
-                initiativeId: initiative4.id
-            },
-            {
-                id: "ye-6",
-                name: "Holiday Schedule",
-                startDate: new Date("2025-12-01"),
-                endDate: new Date("2025-12-15"),
-                duration: 15,
-                progress: 0,
-                type: "task",
-                parent: "ye-1",
-                dependencies: [],
-                resources: ["HR Team", "Operations"],
-                color: "#263238",
-                initiativeId: initiative4.id
-            },
-            {
-                id: "ye-7",
-                name: "Year-End Celebration",
-                startDate: new Date("2025-12-20"),
-                endDate: new Date("2025-12-20"),
+                id: "5",
+                name: "Sprint Release",
+                startDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000),
+                endDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000),
                 duration: 0,
                 progress: 0,
                 type: "milestone",
-                parent: "ye-1",
-                dependencies: ["ye-5", "ye-6"],
-                resources: ["Event Planning", "All Teams"],
-                color: "#B71C1C",
-                initiativeId: initiative4.id
+                parent: "1",
+                dependencies: ["4"],
+                resources: ["Release Manager"],
+                color: "#F44336"
             }
         ];
     }
