@@ -29,6 +29,7 @@ class GanttChart {
         
         this.dayWidth = 40;
         this.rowHeight = 40;
+        this.barHeightOffset = 4; // Offset from top of row
         
         // Auto-save timeout
         this.saveTimeout = null;
@@ -43,6 +44,9 @@ class GanttChart {
             this.loadData().then(() => {
                 this.initializeEventListeners();
                 this.render();
+                
+                // Debug initiatives after loading
+                this.debugInitiatives();
                 
                 // Show notification that data was loaded
                 if (this.tasks.length > 0) {
@@ -664,6 +668,14 @@ class GanttChart {
     }
     
     render() {
+        console.log('=== MAIN RENDER START ===');
+        console.log('Timeline bounds:', {
+            start: this.timelineStart.toLocaleDateString(),
+            end: this.timelineEnd.toLocaleDateString()
+        });
+        
+        this._debugBarCreation = true; // Enable debug for bar creation
+        
         this.renderInitiativeSelector();
         this.renderTaskList();
         this.renderTimeline();
@@ -671,6 +683,23 @@ class GanttChart {
         this.renderTimelineBars();
         // this.renderDependencies(); // Commented out to remove dependency lines
         this.renderTodayLine();
+        
+        this._debugBarCreation = false; // Disable debug after render
+        
+        // Check final state
+        const timelineBars = document.getElementById('timelineBars');
+        const timelineBody = document.getElementById('timelineBody');
+        console.log('=== RENDER COMPLETE ===');
+        console.log('Timeline bars container:', {
+            width: timelineBars.style.width,
+            minWidth: timelineBars.style.minWidth,
+            childCount: timelineBars.children.length
+        });
+        console.log('Timeline body:', {
+            scrollWidth: timelineBody.scrollWidth,
+            clientWidth: timelineBody.clientWidth,
+            scrollable: timelineBody.scrollWidth > timelineBody.clientWidth
+        });
     }
     
     renderInitiativeSelector() {
@@ -700,12 +729,56 @@ class GanttChart {
     
     getVisibleTasks() {
         const result = [];
-        // Filter tasks by current initiative
-        const initiativeTasks = this.tasks.filter(task => 
-            task.initiativeId === this.currentInitiativeId || 
-            this.getTaskInitiative(task) === this.currentInitiativeId
-        );
+        
+        console.log('=== GET VISIBLE TASKS DEBUG ===');
+        console.log('Current initiative ID:', this.currentInitiativeId);
+        console.log('Total tasks:', this.tasks.length);
+        console.log('Available initiatives:', this.initiatives.map(i => ({id: i.id, name: i.name})));
+        
+        // Debug: Show all tasks and their initiative assignments
+        this.tasks.forEach(task => {
+            console.log(`Task "${task.name}":`, {
+                id: task.id,
+                initiativeId: task.initiativeId,
+                hasParent: !!task.parent,
+                type: task.type,
+                startDate: task.startDate.toLocaleDateString(),
+                endDate: task.endDate.toLocaleDateString()
+            });
+        });
+        
+        // Filter tasks by current initiative - FIXED VERSION
+        const initiativeTasks = this.tasks.filter(task => {
+            // If no current initiative, show all tasks (fallback)
+            if (!this.currentInitiativeId) {
+                console.log(`✅ Task '${task.name}' included - no initiative filter`);
+                return true;
+            }
+            
+            // Direct initiative match
+            if (task.initiativeId === this.currentInitiativeId) {
+                console.log(`✅ Task '${task.name}' included - direct initiative match`);
+                return true;
+            }
+            
+            // Check inherited initiative from parent
+            const inheritedInitiative = this.getTaskInitiative(task);
+            if (inheritedInitiative === this.currentInitiativeId) {
+                console.log(`✅ Task '${task.name}' included - inherited initiative match`);
+                return true;
+            }
+            
+            console.log(`❌ Task '${task.name}' filtered out - initiative mismatch:`, {
+                taskInitiative: task.initiativeId,
+                currentInitiative: this.currentInitiativeId
+            });
+            return false;
+        });
+        
+        console.log('Tasks after initiative filter:', initiativeTasks.length);
+        
         const rootTasks = initiativeTasks.filter(task => !task.parent);
+        console.log('Root tasks:', rootTasks.length);
         
         const addTaskAndChildren = (task, level = 0) => {
             result.push({ ...task, level });
@@ -717,6 +790,11 @@ class GanttChart {
         };
         
         rootTasks.forEach(task => addTaskAndChildren(task));
+        
+        console.log('Final visible tasks:', result.length);
+        console.log('Final tasks:', result.map(t => t.name));
+        console.log('=== END GET VISIBLE TASKS DEBUG ===');
+        
         return result;
     }
     
@@ -739,6 +817,8 @@ class GanttChart {
         row.className = `task-row ${task.type}`;
         row.dataset.taskId = task.id;
         row.style.paddingLeft = `${task.level * 20 + 8}px`;
+        row.style.height = `${this.rowHeight}px`;
+        row.style.minHeight = `${this.rowHeight}px`;
         
         if (this.selectedTask === task.id) {
             row.classList.add('selected');
@@ -1001,14 +1081,211 @@ class GanttChart {
     
     renderTimelineBars() {
         const timelineBars = document.getElementById('timelineBars');
+        const timelineBody = document.getElementById('timelineBody');
         timelineBars.innerHTML = '';
         
         const visibleTasks = this.getVisibleTasks();
         
-        visibleTasks.forEach((task, index) => {
-            const bar = this.createTimelineBar(task, index);
-            timelineBars.appendChild(bar);
+        console.log('=== RENDERING TIMELINE BARS ===');
+        console.log('Number of visible tasks:', visibleTasks.length);
+        console.log('Timeline container width:', timelineBars.style.width);
+        console.log('Timeline scroll width:', timelineBody.scrollWidth);
+        
+        // DEBUG TIMELINE BOUNDS
+        console.log('🔍 TIMELINE BOUNDS CHECK:', {
+            timelineStart: this.timelineStart.toLocaleDateString(),
+            timelineEnd: this.timelineEnd.toLocaleDateString(),
+            dayWidth: this.dayWidth,
+            rowHeight: this.rowHeight,
+            today: this.today.toLocaleDateString()
         });
+        
+        // Ensure timeline containers have proper dimensions
+        const totalDays = Math.ceil((this.timelineEnd - this.timelineStart) / (1000 * 60 * 60 * 24));
+        const totalWidth = `${totalDays * this.dayWidth}px`;
+        
+        // Force dimensions
+        timelineBars.style.width = totalWidth;
+        timelineBars.style.minWidth = totalWidth;
+        timelineBars.style.position = 'relative';
+        timelineBars.style.height = `${visibleTasks.length * this.rowHeight}px`;
+        
+        console.log('Forced timeline dimensions:', {
+            width: totalWidth,
+            height: `${visibleTasks.length * this.rowHeight}px`,
+            totalDays: totalDays,
+            dayWidth: this.dayWidth
+        });
+        
+        if (visibleTasks.length === 0) {
+            console.warn('No visible tasks to render!');
+            return;
+        }
+        
+        // Enable debug mode for bar creation
+        this._debugBarCreation = true;
+        
+        visibleTasks.forEach((task, index) => {
+            console.log(`Creating bar for task: ${task.name}`, {
+                id: task.id,
+                startDate: task.startDate.toLocaleDateString(),
+                endDate: task.endDate.toLocaleDateString(),
+                type: task.type,
+                rowIndex: index
+            });
+            
+            const bar = this.createTimelineBar(task, index);
+            if (bar) {
+                timelineBars.appendChild(bar);
+                console.log(`✅ Bar created with position:`, {
+                    left: bar.style.left,
+                    width: bar.style.width,
+                    top: bar.style.top,
+                    backgroundColor: bar.style.backgroundColor,
+                    className: bar.className
+                });
+                
+                // Ensure bar is visible by checking its computed style
+                const rect = bar.getBoundingClientRect();
+                if (rect.width === 0 || rect.height === 0) {
+                    console.warn(`⚠️ Bar for '${task.name}' has zero dimensions!`, rect);
+                }
+            } else {
+                console.error(`❌ Failed to create bar for task: ${task.name}`);
+            }
+        });
+        
+        // Disable debug mode
+        this._debugBarCreation = false;
+        
+        console.log('Total bars created:', timelineBars.children.length);
+        
+        // Force a layout recalculation
+        timelineBody.offsetHeight;
+        
+        console.log('Timeline body final dimensions:', {
+            scrollWidth: timelineBody.scrollWidth,
+            clientWidth: timelineBody.clientWidth,
+            scrollHeight: timelineBody.scrollHeight,
+            clientHeight: timelineBody.clientHeight
+        });
+        
+        console.log('=== END RENDERING TIMELINE BARS ===');
+        
+        // ADD A TEST BAR FOR DEBUGGING - This should definitely be visible
+        const testBar = document.createElement('div');
+        testBar.className = 'timeline-bar task';
+        testBar.style.position = 'absolute';
+        testBar.style.left = '10px';
+        testBar.style.top = '10px';
+        testBar.style.width = '200px';
+        testBar.style.height = '32px';
+        testBar.style.backgroundColor = '#FF0000';
+        testBar.style.border = '3px solid #000000';
+        testBar.style.zIndex = '9999';
+        testBar.style.display = 'block';
+        testBar.textContent = 'TEST BAR - YOU SHOULD SEE THIS';
+        testBar.style.color = 'white';
+        testBar.style.fontSize = '14px';
+        testBar.style.lineHeight = '32px';
+        testBar.style.textAlign = 'center';
+        
+        timelineBars.appendChild(testBar);
+        console.log('🚨 ADDED TEST BAR - THIS MUST BE VISIBLE!');
+        
+        // AGGRESSIVE CONTAINER DEBUGGING
+        console.log('🔍 TIMELINE CONTAINER DEBUG:');
+        const timelineBodyRect = timelineBody.getBoundingClientRect();
+        const timelineBarsRect = timelineBars.getBoundingClientRect();
+        
+        console.log('Timeline Body:', {
+            width: timelineBodyRect.width,
+            height: timelineBodyRect.height,
+            left: timelineBodyRect.left,
+            top: timelineBodyRect.top,
+            display: getComputedStyle(timelineBody).display,
+            visibility: getComputedStyle(timelineBody).visibility,
+            overflow: getComputedStyle(timelineBody).overflow
+        });
+        
+        console.log('Timeline Bars Container:', {
+            width: timelineBarsRect.width,
+            height: timelineBarsRect.height,
+            left: timelineBarsRect.left,
+            top: timelineBarsRect.top,
+            display: getComputedStyle(timelineBars).display,
+            visibility: getComputedStyle(timelineBars).visibility,
+            position: getComputedStyle(timelineBars).position
+        });
+        
+        console.log('Test Bar After Adding:', {
+            width: testBar.getBoundingClientRect().width,
+            height: testBar.getBoundingClientRect().height,
+            left: testBar.getBoundingClientRect().left,
+            top: testBar.getBoundingClientRect().top,
+            display: getComputedStyle(testBar).display,
+            visibility: getComputedStyle(testBar).visibility
+        });
+        
+        // Force timeline body to have minimum dimensions
+        if (timelineBodyRect.height === 0) {
+            console.log('🚨 TIMELINE BODY HAS ZERO HEIGHT - FORCING HEIGHT');
+            timelineBody.style.height = '400px';
+            timelineBody.style.minHeight = '400px';
+        }
+        
+        if (timelineBarsRect.height === 0) {
+            console.log('🚨 TIMELINE BARS HAS ZERO HEIGHT - FORCING HEIGHT');
+            timelineBars.style.height = '400px';
+            timelineBars.style.minHeight = '400px';
+        }
+        
+        // Verify bar visibility
+        setTimeout(() => this.verifyBarVisibility(), 10);
+    }
+    
+    verifyBarVisibility() {
+        const timelineBars = document.getElementById('timelineBars');
+        const timelineBody = document.getElementById('timelineBody');
+        const bars = timelineBars.querySelectorAll('.timeline-bar');
+        
+        console.log('=== VERIFYING BAR VISIBILITY ===');
+        console.log('Total bars in DOM:', bars.length);
+        
+        const containerRect = timelineBody.getBoundingClientRect();
+        console.log('Timeline body dimensions:', {
+            width: containerRect.width,
+            height: containerRect.height,
+            scrollWidth: timelineBody.scrollWidth,
+            scrollHeight: timelineBody.scrollHeight
+        });
+        
+        bars.forEach((bar, index) => {
+            const rect = bar.getBoundingClientRect();
+            const computedStyle = window.getComputedStyle(bar);
+            const taskId = bar.dataset.taskId;
+            const task = this.tasks.find(t => t.id === taskId);
+            
+            console.log(`Bar ${index} (${task?.name || 'Unknown'})`, {
+                position: computedStyle.position,
+                left: bar.style.left,
+                top: bar.style.top,
+                width: bar.style.width,
+                backgroundColor: computedStyle.backgroundColor,
+                visibility: computedStyle.visibility,
+                display: computedStyle.display,
+                opacity: computedStyle.opacity,
+                zIndex: computedStyle.zIndex,
+                rect: {
+                    left: rect.left,
+                    top: rect.top,
+                    width: rect.width,
+                    height: rect.height
+                }
+            });
+        });
+        
+        console.log('=== END VERIFYING BAR VISIBILITY ===');
     }
     
     createTimelineBar(task, rowIndex) {
@@ -1017,13 +1294,64 @@ class GanttChart {
         bar.dataset.taskId = task.id;
         bar.style.backgroundColor = task.color;
         
-        const startOffset = this.getDateOffset(task.startDate);
-        const duration = task.type === 'milestone' ? 0 : Math.max(1, Math.ceil((task.endDate - task.startDate) / (1000 * 60 * 60 * 24)));
+        let startOffset = this.getDateOffset(task.startDate);
+        const duration = task.type === 'milestone' ? 0 : Math.max(1, Math.ceil((task.endDate - task.startDate) / (1000 * 60 * 60 * 24)) + 1);
         const width = task.type === 'milestone' ? 16 : duration * this.dayWidth;
         
+        // Debug logging for bar positioning
+        console.log(`Positioning bar for ${task.name}:`, {
+            startDate: task.startDate.toLocaleDateString(),
+            endDate: task.endDate.toLocaleDateString(),
+            startOffset: startOffset,
+            duration: duration,
+            width: width,
+            dayWidth: this.dayWidth,
+            rowIndex: rowIndex,
+            top: rowIndex * this.rowHeight + 4
+        });
+        
+        // Check if bar would be visible - BUT SHOW IT ANYWAY FOR DEBUGGING
+        const timelineWidth = Math.ceil((this.timelineEnd - this.timelineStart) / (1000 * 60 * 60 * 24)) * this.dayWidth;
+        if (startOffset < -width || startOffset > timelineWidth) {
+            console.warn(`⚠️ Bar for task '${task.name}' is outside visible timeline range - FORCING VISIBILITY!`, {
+                startOffset: startOffset,
+                timelineWidth: timelineWidth,
+                taskStart: task.startDate.toLocaleDateString(),
+                taskEnd: task.endDate.toLocaleDateString(),
+                timelineStart: this.timelineStart.toLocaleDateString(),
+                timelineEnd: this.timelineEnd.toLocaleDateString()
+            });
+            
+            // FORCE the bar to be visible by positioning it at 0 if it's too far left
+            if (startOffset < -width) {
+                console.log(`🔧 FORCING bar for '${task.name}' to position 0 (was ${startOffset})`);
+                startOffset = 0;
+            }
+        }
+        
         bar.style.left = `${startOffset}px`;
-        bar.style.top = `${rowIndex * this.rowHeight + 4}px`;
+        bar.style.top = `${rowIndex * this.rowHeight + this.barHeightOffset}px`;
         bar.style.width = `${width}px`;
+        
+        // FORCE VISIBILITY FOR DEBUGGING
+        bar.style.height = '32px';
+        bar.style.backgroundColor = task.color || '#FF0000'; // Red fallback for visibility
+        bar.style.border = '2px solid #000000'; // Black border for debugging
+        bar.style.zIndex = '1000';
+        bar.style.opacity = '1';
+        bar.style.display = 'block';
+        bar.style.visibility = 'visible';
+        bar.style.position = 'absolute';
+        
+        console.log(`🔧 FORCED BAR STYLES for ${task.name}:`, {
+            left: bar.style.left,
+            top: bar.style.top,
+            width: bar.style.width,
+            height: bar.style.height,
+            backgroundColor: bar.style.backgroundColor,
+            display: bar.style.display,
+            position: bar.style.position
+        });
         
         if (this.selectedTask === task.id) {
             bar.classList.add('selected');
@@ -1288,8 +1616,21 @@ class GanttChart {
     
     getDateOffset(date) {
         const diffTime = date - this.timelineStart;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         const offset = diffDays * this.dayWidth;
+        
+        // AGGRESSIVE DATE OFFSET DEBUGGING
+        console.log('🔍 DATE OFFSET CALCULATION:', {
+            inputDate: date.toLocaleDateString(),
+            inputDateISO: date.toISOString(),
+            timelineStart: this.timelineStart.toLocaleDateString(),
+            timelineStartISO: this.timelineStart.toISOString(),
+            diffTime: diffTime,
+            diffDays: diffDays,
+            dayWidth: this.dayWidth,
+            calculatedOffset: offset,
+            isValidOffset: offset >= 0 && offset < 10000
+        });
         
         // Debug for specific dates
         if (date === this.today || (date && date.toDateString() === this.today.toDateString())) {
@@ -1341,6 +1682,130 @@ class GanttChart {
     selectTask(taskId) {
         this.selectedTask = taskId;
         this.render();
+        
+        // Auto-scroll to the selected task in the timeline
+        if (taskId) {
+            const task = this.tasks.find(t => t.id === taskId);
+            if (task) {
+                this.scrollToTask(task);
+            }
+        }
+    }
+    
+    scrollToTask(task) {
+        console.log('=== SCROLL TO TASK DEBUG ===');
+        console.log('Scrolling to task:', task.name);
+        console.log('Task details:', {
+            id: task.id,
+            startDate: task.startDate.toLocaleDateString(),
+            endDate: task.endDate.toLocaleDateString(),
+            type: task.type
+        });
+        
+        setTimeout(() => {
+            const timelineBody = document.getElementById('timelineBody');
+            
+            if (!timelineBody) {
+                console.error('Timeline body element not found!');
+                return;
+            }
+            
+            const taskStartOffset = this.getDateOffset(task.startDate);
+            const taskEndOffset = this.getDateOffset(task.endDate);
+            const taskCenterOffset = (taskStartOffset + taskEndOffset) / 2;
+            const viewportWidth = timelineBody.clientWidth;
+            
+            console.log('Scroll calculations:', {
+                taskStartOffset,
+                taskEndOffset,
+                taskCenterOffset,
+                viewportWidth,
+                scrollWidth: timelineBody.scrollWidth,
+                currentScrollLeft: timelineBody.scrollLeft
+            });
+            
+            // Center the task in the viewport
+            const scrollPosition = taskCenterOffset - (viewportWidth / 2);
+            const finalScrollPosition = Math.max(0, scrollPosition);
+            
+            console.log('Scrolling to position:', finalScrollPosition);
+            
+            // Check if scrolling is possible
+            const maxScrollPosition = timelineBody.scrollWidth - viewportWidth;
+            console.log('Max scroll position:', maxScrollPosition);
+            
+            if (timelineBody.scrollWidth <= viewportWidth) {
+                console.warn('Timeline not scrollable - content fits in viewport');
+                console.log('Forcing timeline width to be larger...');
+                
+                // Force timeline to be scrollable by ensuring minimum width
+                const timelineBars = document.getElementById('timelineBars');
+                const timelineGrid = document.getElementById('timelineGrid');
+                const minWidth = Math.max(viewportWidth * 2, finalScrollPosition + viewportWidth);
+                
+                timelineBars.style.width = `${minWidth}px`;
+                timelineBars.style.minWidth = `${minWidth}px`;
+                timelineGrid.style.width = `${minWidth}px`;
+                timelineGrid.style.minWidth = `${minWidth}px`;
+                
+                console.log('Timeline width forced to:', minWidth);
+            }
+            
+            // Force layout recalculation
+            timelineBody.offsetWidth;
+            
+            console.log('Final scroll check:', {
+                scrollWidth: timelineBody.scrollWidth,
+                clientWidth: timelineBody.clientWidth,
+                isScrollable: timelineBody.scrollWidth > timelineBody.clientWidth
+            });
+            
+            // Smooth scroll to the position
+            try {
+                if (timelineBody.scrollWidth > timelineBody.clientWidth) {
+                    timelineBody.scrollTo({
+                        left: finalScrollPosition,
+                        behavior: 'smooth'
+                    });
+                } else {
+                    console.warn('Timeline still not scrollable after forcing width');
+                }
+                
+                // Verify scroll happened
+                setTimeout(() => {
+                    console.log('Scroll completed. New position:', timelineBody.scrollLeft);
+                    console.log('Task should be visible at center of viewport');
+                    console.log('=== END SCROLL TO TASK DEBUG ===');
+                }, 500);
+            } catch (error) {
+                console.error('Scroll failed:', error);
+                // Fallback to direct assignment
+                timelineBody.scrollLeft = finalScrollPosition;
+                console.log('Fallback scroll position set to:', timelineBody.scrollLeft);
+                console.log('=== END SCROLL TO TASK DEBUG ===');
+            }
+        }, 100); // Small delay to ensure rendering is complete
+    }
+    
+    fixTaskInitiatives() {
+        console.log('=== FIXING TASK INITIATIVES ===');
+        let fixedCount = 0;
+        
+        this.tasks.forEach(task => {
+            if (!task.initiativeId && this.currentInitiativeId) {
+                console.log(`Fixing task '${task.name}' - assigning initiative:`, this.currentInitiativeId);
+                task.initiativeId = this.currentInitiativeId;
+                fixedCount++;
+            }
+        });
+        
+        console.log(`Fixed ${fixedCount} tasks without initiative IDs`);
+        
+        if (fixedCount > 0) {
+            this.autoSave();
+        }
+        
+        console.log('=== END FIXING TASK INITIATIVES ===');
     }
     
     toggleTaskCollapse(taskId) {
@@ -1461,10 +1926,12 @@ class GanttChart {
                 ...taskData
             };
             
-            // If it's a top-level summary task, mark it as a project and associate with current initiative
+            // Associate all new tasks with current initiative
+            newTask.initiativeId = this.currentInitiativeId;
+            
+            // If it's a top-level summary task, mark it as a project
             if (!newTask.parent && newTask.type === 'summary') {
                 newTask.isProject = true;
-                newTask.initiativeId = this.currentInitiativeId;
             }
             
             this.tasks.push(newTask);
@@ -1787,11 +2254,11 @@ class GanttChart {
                 this.initiatives = [defaultInitiative];
                 this.currentInitiativeId = defaultInitiative.id;
                 
-                // Add initiative ID to all top-level projects
+                // Add initiative ID to all tasks
                 data.tasks.forEach(task => {
+                    task.initiativeId = defaultInitiative.id;
                     if (!task.parent && task.type === 'summary') {
                         task.isProject = true;
-                        task.initiativeId = defaultInitiative.id;
                     }
                 });
             } else {
@@ -1801,11 +2268,24 @@ class GanttChart {
             }
             
             // Restore tasks with proper date objects
-            this.tasks = data.tasks.map(task => ({
-                ...task,
-                startDate: new Date(task.startDate),
-                endDate: new Date(task.endDate)
-            }));
+            this.tasks = data.tasks.map(task => {
+                const restoredTask = {
+                    ...task,
+                    startDate: new Date(task.startDate),
+                    endDate: new Date(task.endDate),
+                    // Ensure all tasks have an initiativeId
+                    initiativeId: task.initiativeId || this.currentInitiativeId
+                };
+                
+                // Fix any tasks that might have invalid initiative IDs
+                const validInitiativeIds = this.initiatives.map(i => i.id);
+                if (restoredTask.initiativeId && !validInitiativeIds.includes(restoredTask.initiativeId)) {
+                    console.warn(`Task '${restoredTask.name}' has invalid initiative ID '${restoredTask.initiativeId}', reassigning to current initiative`);
+                    restoredTask.initiativeId = this.currentInitiativeId;
+                }
+                
+                return restoredTask;
+            });
             
             // Restore other settings
             this.collapsedTasks = new Set(data.collapsedTasks || []);
@@ -1822,7 +2302,11 @@ class GanttChart {
             // Don't restore old bounds as they might be from previous years
             this.updateTimelineBounds();
             
-            console.log('Data loaded from Firestore');
+            console.log('Data loaded from Firestore:', {
+                tasksCount: this.tasks.length,
+                initiativesCount: this.initiatives.length,
+                currentInitiative: this.currentInitiativeId
+            });
             return true;
         } catch (error) {
             console.error('Failed to load from Firestore:', error);
@@ -1877,11 +2361,11 @@ class GanttChart {
                 this.initiatives = [defaultInitiative];
                 this.currentInitiativeId = defaultInitiative.id;
                 
-                // Add initiative ID to all top-level projects
+                // Add initiative ID to all tasks
                 data.tasks.forEach(task => {
+                    task.initiativeId = defaultInitiative.id;
                     if (!task.parent && task.type === 'summary') {
                         task.isProject = true;
-                        task.initiativeId = defaultInitiative.id;
                     }
                 });
             } else {
@@ -1891,11 +2375,24 @@ class GanttChart {
             }
             
             // Restore tasks with proper date objects
-            this.tasks = data.tasks.map(task => ({
-                ...task,
-                startDate: new Date(task.startDate),
-                endDate: new Date(task.endDate)
-            }));
+            this.tasks = data.tasks.map(task => {
+                const restoredTask = {
+                    ...task,
+                    startDate: new Date(task.startDate),
+                    endDate: new Date(task.endDate),
+                    // Ensure all tasks have an initiativeId
+                    initiativeId: task.initiativeId || this.currentInitiativeId
+                };
+                
+                // Fix any tasks that might have invalid initiative IDs
+                const validInitiativeIds = this.initiatives.map(i => i.id);
+                if (restoredTask.initiativeId && !validInitiativeIds.includes(restoredTask.initiativeId)) {
+                    console.warn(`Task '${restoredTask.name}' has invalid initiative ID '${restoredTask.initiativeId}', reassigning to current initiative`);
+                    restoredTask.initiativeId = this.currentInitiativeId;
+                }
+                
+                return restoredTask;
+            });
             
             // Restore collapsed tasks
             this.collapsedTasks = new Set(data.collapsedTasks || []);
@@ -1912,6 +2409,9 @@ class GanttChart {
             
             // Update timeline bounds based on tasks
             this.updateTimelineBounds();
+            
+            // Fix any tasks without initiative ID
+            this.fixTaskInitiatives();
             
             return true;
         } catch (error) {
@@ -2027,6 +2527,36 @@ class GanttChart {
             notification.classList.remove('show');
             setTimeout(() => notification.remove(), 300);
         }, duration);
+    }
+    
+    debugInitiatives() {
+        console.log('=== DEBUG INITIATIVES ===');
+        console.log('Current Initiative ID:', this.currentInitiativeId);
+        console.log('All Initiatives:', this.initiatives);
+        console.log('Tasks by Initiative:');
+        
+        this.initiatives.forEach(initiative => {
+            const initiativeTasks = this.tasks.filter(task => 
+                task.initiativeId === initiative.id || 
+                this.getTaskInitiative(task) === initiative.id
+            );
+            console.log(`Initiative: ${initiative.name} (${initiative.id})`, {
+                taskCount: initiativeTasks.length,
+                tasks: initiativeTasks.map(t => ({ name: t.name, id: t.id, initiativeId: t.initiativeId }))
+            });
+        });
+        
+        // Check for orphaned tasks
+        const orphanedTasks = this.tasks.filter(task => {
+            const validInitiativeIds = this.initiatives.map(i => i.id);
+            return task.initiativeId && !validInitiativeIds.includes(task.initiativeId);
+        });
+        
+        if (orphanedTasks.length > 0) {
+            console.warn('Orphaned tasks (invalid initiative ID):', orphanedTasks);
+        }
+        
+        console.log('=== END DEBUG INITIATIVES ===');
     }
     
     async clearAllData() {
