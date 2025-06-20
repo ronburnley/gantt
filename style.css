@@ -807,7 +807,7 @@ select.form-control {
   cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease-standard);
   align-items: center;
-  min-height: 48px;
+  box-sizing: border-box;
 }
 
 .task-row > div {
@@ -1046,7 +1046,6 @@ select.form-control {
 
 .timeline-bars {
   position: relative;
-  min-height: 100%;
   /* Width will be set dynamically by JavaScript */
 }
 
