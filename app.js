@@ -925,9 +925,11 @@ class GanttChart {
         const header = document.getElementById('timelineHeader');
         header.innerHTML = '';
         
+        let monthRow = null;
+        
         // Add month row for day and week views
         if (this.currentZoom === 'day' || this.currentZoom === 'week') {
-            const monthRow = document.createElement('div');
+            monthRow = document.createElement('div');
             monthRow.className = 'timeline-header-row timeline-month-row';
             
             const monthsData = this.getMonthsInRange();
